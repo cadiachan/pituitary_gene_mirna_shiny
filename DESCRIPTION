@@ -1,0 +1,51 @@
+Package: pituitary_gene_mirna_shiny
+Version: 0.0-1
+Date: 2021-10-20
+Title: Pituitary Gland Shiny App
+Description: Visualizes gene and miRNA expression data from mouse pituitary gland.
+Arthors@R: c(person("Cadia", "Chan", role = c("aut", "cre"),
+                    email = "cadia.chan@mail.utoronto.ca"), 
+              person("Huayun", "Hou", role = c("aut"),
+                    email = "huayunhou@gmail.com"),  
+              person("Dustin", "Sokolowski", role = c("aut",
+                    email = "dustin.sokolowski@sickkids.ca"),
+              person("Sunyun", "Lee", role = c("aut"),
+                    email = "sunyun.lee@mail.utoronto.ca"),
+              person("Mariela", "Fayokoo-Martinez", role = c("aut"),
+                    email = "mfaykoomartinez@gmail.com"),
+              person("Kyoko", "Yuki", role = c("aut"),
+                    email= "kyoko.yuki@sickkids.ca"),
+              person("Anna", "Roy", role = c("aut"),
+                    email = ""),
+              person("Matt", "Hudson", role = c("aut"),
+                    email = "matt.hudson@sickkids.ca"),
+              person("Liis", "Uusküla-Reimand", role = c("aut"),
+                    email = "liis.uuskula-reimand@sickkids.ca"),
+              person("Anna", "Goldenberg", role = c("aut"),
+                    email = "nyulik@gmail.com"),
+              person("Zhaolei", "Zhang", role = c("aut"),
+                    email = "zhaolei.zhang@utoronto.ca"))
+              person("Mark", "Palmert", role = c("aut"),
+                    email = ""),
+              person("Michael", "Wilson", role = c("aut"),
+                    email = "michael.wilson@sickkids.ca"))
+Imports: 
+    dplyr,
+    stringr,
+    edgeR,
+    reshape2,
+    RColorBrewer,
+    ggplot2,
+    ggpubr,
+    scales,
+    colorspace,
+    EDASeq,
+    biomaRt,
+    gridExtra,
+    grid,
+    UpSetR,
+    shiny
+License: GPL-3
+Encoding: UTF-8
+Maintainer: Cadia Chan <cadia.chan@mail.utoronto.ca>
+
