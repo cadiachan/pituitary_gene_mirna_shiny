@@ -31,17 +31,10 @@ Arthors@R: c(person("Cadia", "Chan", role = c("aut", "cre"),
                     email = "michael.wilson@sickkids.ca"))
 Imports: 
     dplyr,
-    stringr,
     reshape2,
-    RColorBrewer,
     ggplot2,
-    ggpubr,
-    scales,
-    colorspace,
     EDASeq,
-    gridExtra,
-    grid,
-    shiny
+    shiny,
     shinyjs
 License: GPL-3
 Encoding: UTF-8
