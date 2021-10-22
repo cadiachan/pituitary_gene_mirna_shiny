@@ -1,5 +1,6 @@
 library(shiny)
 
+
 source("scripts.R")
 # Define UI ----
 ui <- fluidPage(
@@ -15,13 +16,27 @@ ui <- fluidPage(
                         "from 3'UTR-seq and small RNA-seq respectively."),
                       p("Raw data can be accessed at ",
                         a("E-MTAB-9460.", 
-                          href = "https://www.ebi.ac.uk/arrayexpress/")),
+                          href = "https://www.ebi.ac.uk/arrayexpress/",
+                          target = "_blank"),
+                        "(Fix link once data is available)"),
                       br(),
                       h2("Features"),
                       p("- Visualize gene and miRNA expression plots across postnatal ages and between sexes."),
                       p("- Quantify log2FC and FDR for DE genes and miRNAs for each comparison."),
                       p("- Intersect genes of interest with gene lists from relevant published studies."),
-                      p("- Output normalized and log2(normalized) counts for genes and miRNAs of interest.")
+                      p("- Output normalized and log2(normalized) counts for genes and miRNAs of interest."),
+                      br(),
+                      br(),
+                      br(),
+                      h2("To-do <priority>"),
+                      p("- Add in miRNA-gene correlation tab"),
+                      p("- Add in default lists to show DE genes and miRNAs from comparisons in the manuscript"),
+                      p("- Design graphical abstract for <Home> tab"),
+                      br(),
+                      h2("To-do <possible things to add>"),
+                      p("- Add cell-type specificity to DE genes based on scMappR results?"),
+                      p("- qPCR tab from Hou et al 2017"),
+                      p("- Add filter for sex-bias or age-bias in DE tables (redundant feature of default lists?)")
              ),
              tabPanel("Data Browser", icon = icon("chart-bar"),
                       sidebarLayout(
@@ -29,15 +44,16 @@ ui <- fluidPage(
                           shinyjs::useShinyjs(),
                           id = "side-panel",
                           width = 3,
-                          h3("Input genes"),
-                          helpText(h5("Separate genes/miRNAs with a comma")),
-                          textInput("gene", label = NULL,
-                                    placeholder = "Lhb,let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7"
-                                    # value ="Lhb,let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,miR-224-5p"
-                          ),
-                          h3("or"),
-                          helpText(h5("Upload a .txt file with genes/miRNAs on separate lines")),
-                          fileInput("file", label = NULL, accept = ".txt"),
+                          h3("Select input method"),
+                          radioButtons("input_type",
+                                       label = h4("Input type"),
+                                       choices = list("Type in genes/miRNAs" = 1, "Upload file" = 2),
+                                       selected = 1,
+                                       inline = T),
+                          uiOutput("add_helper_input"),
+                          uiOutput("add_input_ui"),
+                          br(),
+                          
                           div(style="display:inline-block",
                               actionButton("submit",
                                            label = "Submit",
@@ -49,23 +65,44 @@ ui <- fluidPage(
                           br(),
                           h3("Select studies to intersect"),
                           checkboxGroupInput("pub_study",
-                                             label = h4("Puberty-related"),
-                                             choices = list("Perry 2014" = "Perry2014",
-                                                            "Day 2015" = "Day2015_GWAS_VB",
-                                                            "Day 2017" = "Day2017_nearest",
-                                                            "Hollis 2020" = "Hollis2020_GWAS_VB_FH",
-                                                            "IHH/Kallmann" = "IHH/Kallmann"
+                                             label = h4("Puberty-related gene lists"),
+                                             choiceNames = list(
+                                               HTML("Perry 2014 <a href = 'https://pubmed.ncbi.nlm.nih.gov/25231870/'>(PMID: 25231870)</a>"),
+                                               HTML("Day 2015 <a href = 'https://pubmed.ncbi.nlm.nih.gov/26548314/'>(PMID: 26548314)</a>"),
+                                               HTML("Day 2017 <a href = 'https://pubmed.ncbi.nlm.nih.gov/28436984/'>(PMID: 28436984)</a>"),
+                                               HTML("Hollis 2020 <a href = 'https://pubmed.ncbi.nlm.nih.gov/32210231/'>(PMID: 32210231)</a>"),
+                                               "IHH/Kallmann"
                                              ),
-                                             selected = NULL),
+                                             choiceValues = list("Perry2014",
+                                                                 "Day2015_GWAS_VB",
+                                                                 "Day2017_nearest",
+                                                                 "Hollis2020_GWAS_VB_FH",
+                                                                 "IHH/Kallmann"
+                                             ),
+                                             selected = c("Perry2014",
+                                                          "Day2015_GWAS_VB",
+                                                          "Day2017_nearest",
+                                                          "Hollis2020_GWAS_VB_FH",
+                                                          "IHH/Kallmann")),
                           checkboxGroupInput("pit_study",
-                                             label = h4("Pituitary-related"),
-                                             choices = list("Ye 2015" = "Ye2015_PA_GWAS",
-                                                            "Fang 2016" = "Fang2016_CPHD",
-                                                            "Hauser 2019" = "Hauser2019_PA",
-                                                            "Kurtoglu 2019" = "Kurtoglu2019_hypopituitarism"
+                                             label = h4("Pituitary-related gene lists"),
+                                             choiceNames = list(
+                                               HTML("Ye 2015 <a href = 'https://pubmed.ncbi.nlm.nih.gov/26029870/'>(PMID: 26029870)</a>"),
+                                               HTML("Fang 2016 <a href = 'https://pubmed.ncbi.nlm.nih.gov/27828722/'>(PMID: 27828722)</a>"),
+                                               HTML("Hauser 2019 <a href = 'https://pubmed.ncbi.nlm.nih.gov/31139150/'>(PMID: 31139150)</a>"),
+                                               HTML("Kurtoglu 2019 <a href = 'https://pubmed.ncbi.nlm.nih.gov/29739730/'>(PMID: 29739730)</a>")
                                              ),
-                                             selected = NULL),
-                          helpText(h5("It is recommended to input ~20 genes/miRNAs for viewing on the browser.")),
+                                             choiceValues = list("Ye2015_PA_GWAS",
+                                                            "Fang2016_CPHD",
+                                                            "Hauser2019_PA",
+                                                            "Kurtoglu2019_hypopituitarism"
+                                             ),
+                                             selected = c("Ye2015_PA_GWAS",
+                                                          "Fang2016_CPHD",
+                                                          "Hauser2019_PA",
+                                                          "Kurtoglu2019_hypopituitarism")),
+                          downloadButton("save_genelists", "Download gene lists"),
+                          helpText(h5("It is recommended to input <20 genes/miRNAs for viewing on the browser.")),
                           helpText(h5("If more genes/miRNAs are inputted, expression values and DE table can be downloaded."))
                         ),
                         mainPanel(
@@ -84,7 +121,7 @@ ui <- fluidPage(
                                      h3("Genes"),
                                      plotOutput("gene_plot",
                                                 height = "auto",
-                                                width = "70%")),
+                                                width = "70%")) ,
                               column(6,
                                      br(),
                                      uiOutput("add_download_mirna_plot"),
@@ -128,10 +165,54 @@ ui <- fluidPage(
                         )) 
              ),
              tabPanel("About", icon=icon("quote-left"),
-                      h2("About"),
+                      h2("Credits"),
                       p("Text about this app"),
                       br(),
-                      h2("Credits")
+                      h2("Citations"),
+                      h4("Hou H, Chan C, Yuki KE, et al. Postnatal developmental trajectory of sex-biased gene expression in the mouse pituitary gland.",
+                        "Manuscript in preparation."),
+                      br(),
+                      p("Gene lists are curated from these studies:"),
+                      h4("Perry JR, Day F, Elks CE, et al. Parent-of-origin-specific allelic associations among 106 genomic loci for age at menarche.",
+                      "Nature. 2014;514(7520):92-97.",
+                      a("doi:10.1038/nature13545",
+                        href="https://pubmed.ncbi.nlm.nih.gov/25231870/",
+                        target = "_blank")),
+                      h4("Day FR, Bulik-Sullivan B, Hinds DA, et al. Shared genetic aetiology of puberty timing between sexes and with",
+                      "health-related outcomes. Nat Commun. 2015;6:8842. Published 2015 Nov 9.",
+                        a("doi:10.1038/ncomms9842",
+                          href="https://pubmed.ncbi.nlm.nih.gov/26548314/",
+                          target = "_blank")),
+                      h4("Day FR, Thompson DJ, Helgason H, et al. Genomic analyses identify hundreds of variants associated with age at menarche",
+                      "and support a role for puberty timing in cancer risk. Nat Genet. 2017;49(6):834-841.",
+                        a("doi:10.1038/ng.3841",
+                          href="https://pubmed.ncbi.nlm.nih.gov/28436984/",
+                          target = "_blank")),
+                      h4("Hollis B, Day FR, Busch AS, et al. Genomic analysis of male puberty timing highlights shared genetic basis with hair colour",
+                      "and lifespan. Nat Commun. 2020;11(1):1536. Published 2020 Mar 24.",
+                        a("doi:10.1038/s41467-020-14451-5",
+                          href="https://pubmed.ncbi.nlm.nih.gov/32210231/",
+                          target = "_blank")),
+                      h4("Ye Z, Li Z, Wang Y, et al. Common variants at 10p12.31, 10q21.1 and 13q12.13 are associated with sporadic pituitary adenoma.",
+                      "Nat Genet. 2015;47(7):793-797.",
+                        a("doi:10.1038/ng.3322",
+                          href="https://pubmed.ncbi.nlm.nih.gov/26029870/",
+                          target = "_blank")),
+                      h4("Fang Q, George AS, Brinkmeier ML, et al. Genetics of Combined Pituitary Hormone Deficiency: Roadmap into the Genome Era.",
+                      "Endocr Rev. 2016;37(6):636-675.",
+                        a("doi:10.1210/er.2016-1101",
+                          href="https://pubmed.ncbi.nlm.nih.gov/27828722/",
+                          target = "_blank")),
+                      h4("Hauser BM, Lau A, Gupta S, Bi WL, Dunn IF. The Epigenomics of Pituitary Adenoma.",
+                      "Front Endocrinol (Lausanne). 2019;10:290. Published 2019 May 14.",
+                        a("doi:10.3389/fendo.2019.00290",
+                          href="https://pubmed.ncbi.nlm.nih.gov/31139150/",
+                          target = "_blank")),
+                      h4("Kurtoglu S, Ozdemir A, Hatipoglu N. Neonatal Hypopituitarism: Approaches to Diagnosis and Treatment.",
+                      "J Clin Res Pediatr Endocrinol. 2019;11(1):4-12.",
+                        a("doi:10.4274/jcrpe.galenos.2018.2018.0036",
+                          href="https://pubmed.ncbi.nlm.nih.gov/32210231/",
+                          target = "_blank")),
              )
   )
   # )
@@ -142,9 +223,70 @@ ui <- fluidPage(
 # Define server logic ----
 server <- function(input, output) {
   
+  data <- reactive({
+    text_input <- F
+    file_input <- F
+    # print(input$gene)
+    if(!is.null(input$gene)) {
+      # Check if genes are inputted by text box
+      if(input$input_type == 1 & nchar(input$gene) > 0) {
+        text_input <- T
+      } 
+      # Check if a file is uploaded
+      else if(input$input_type == 2) {
+        file_input <- T
+      }else { file_input <- F; text_input <- F}
+    }
+    
+    # print(text_input)
+    # print(file_input)
+    
+    if(text_input == T & file_input == F) {
+      output$input_err <- NULL
+      data <- parse_list(input$gene, type = "text")
+    }
+    else if(text_input == F & file_input == T) {
+      output$input_err <- NULL
+      file <- input$gene
+      read_file <- read.table(file$datapath, header = F)
+      data <- parse_list(read_file, type = "file")
+    }
+    else{ # Print error message if both fields are empty.
+      data <- parse_list("", type = "text")
+      msg <- "Please input a list of genes/miRNAs."
+      output$input_err <- renderText({
+        msg
+      })
+    }
+    return(data)
+  })
+  
   # Reset input values in the side-panel
   observeEvent(input$reset, {
     shinyjs::reset("side-panel")
+  })
+  
+  # Add in UI based on input choice
+  observeEvent(input$input_type, {
+    if(input$input_type == 1) {
+      output$add_helper_input <- renderUI({
+        helpText(h5("Separate genes/miRNAs with a comma"))
+      })
+      output$add_input_ui <- renderUI({
+        textInput("gene", label = NULL,
+                  placeholder = "Lhb,let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7"
+                  # value ="Lhb,let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,miR-224-5p"
+        )
+      })
+    }
+    if(input$input_type == 2) {
+      output$add_helper_input <- renderUI({
+        helpText(h5("Upload a .txt file with genes/miRNAs on separate lines"))
+      })
+      output$add_input_ui <- renderUI({
+        fileInput("gene", label = NULL, accept = ".txt")
+      })
+    }
   })
   
   # Add in save buttons only when valid genes/miRNAs are inputted.
@@ -172,7 +314,6 @@ server <- function(input, output) {
         )
       })
     }
-    
     if(type == "mirna") {
       output$add_download_mirna_plot <- renderUI({
         tagList(
@@ -202,71 +343,24 @@ server <- function(input, output) {
   # eventReactive events are delayed until the button is pressed
   press_submit <- eventReactive(input$submit, {
     
-    text_input <- F
-    file_input <- F
-    
-    # Check if genes are inputted by text box
-    if(nchar(input$gene) > 0) {
-      text_input <- T
-    }
-    
-    # Check if a file is uploaded
-    if(!is.null(input$file)) {
-      file_input <- T
-    }
-    
-    if(text_input & file_input) { # Print error message if both fields are filled.
-      msg <- "Please choose one input method."
-      parse_input <- parse_list("", type = "text")
-      output$input_err <- renderText({
-        msg
-      })
-    }
-    else if(text_input == T & file_input == F) {
-      output$input_err <- NULL
-      parse_input <- parse_list(input$gene, type = "text")
-      output$add_download_plots <- renderUI({
-        tagList(
-          h5("Save plots: "),
-          downloadButton("save_png_plots", ".png"),
-          downloadButton("save_pdf_plots", ".pdf")
-        )
-      })
-    }
-    else if(text_input == F & file_input == T) {
-      output$input_err <- NULL
-      file <- input$file
-      read_file <- read.table(file$datapath, header = F)
-      parse_input <- parse_list(read_file, type = "file")
-      output$add_download_plots <- renderUI({
-        tagList(
-          h5("Save plots: "),
-          downloadButton("save_png_plots", ".png"),
-          downloadButton("save_pdf_plots", ".pdf")
-        )
-      })
-    }
-    else{ # Print error message if both fields are empty.
-      parse_input <- parse_list("", type = "text")
-      msg <- "Please input a list of genes/miRNAs."
-      output$input_err <- renderText({
-        msg
-      })
-    }
-    
     output$invalid_genes <- NULL
-    if(length(parse_input[["invalid"]]) > 0) {
-      if(parse_input[["invalid"]] != ""){
-        invalid_msg <- "Not found: "
-        invalid_genes <- paste(parse_input[["invalid"]], collapse = ",")
-        output$invalid_genes <- renderText({
-          paste0(invalid_msg, invalid_genes)
-        })
-      }
-    } else { output$invalid_genes <- NULL}
+    invalid_msg <- "Not found: "
+    invalid_genes <- paste(data()[["invalid"]], collapse = ",")
+    if(identical(data()[["invalid"]], character(0))) {
+      output$invalid_genes <- NULL
+    }
+    else if(length(data()[["invalid"]]) > 1) {
+      output$invalid_genes <- renderText({
+        paste0(invalid_msg, invalid_genes)
+      })
+    }
+    else if(length(data()[["invalid"]]) == 1 & data()[["invalid"]] != "") {
+      output$invalid_genes <- renderText({
+        paste0(invalid_msg, invalid_genes)
+      })
+    } else{output$invalid_genes <- NULL}
     
-    
-    gplot <- exprplot_hhtheme(genelist = parse_input[["genes"]],
+    gplot <- exprplot_hhtheme(genelist = data()[["genes"]],
                               count_data = utr_log2,
                               metadata = pData(utr_obj),
                               counttype = "genes")
@@ -276,7 +370,7 @@ server <- function(input, output) {
       add_ui(type = "gene")
     }
     
-    mplot <- exprplot_hhtheme(genelist = parse_input[["mirnas"]],
+    mplot <- exprplot_hhtheme(genelist = data()[["mirnas"]],
                               count_data = mirna_log2,
                               metadata = pData(mirna_obj),
                               counttype = "mirnas")
@@ -286,17 +380,17 @@ server <- function(input, output) {
       add_ui(type = "mirna")
     }
     
-    gtable <- print_de_table(genelist = parse_input[["genes"]],
+    gtable <- print_de_table(genelist = data()[["genes"]],
                              de_table = utr_de_table,
                              counttype = "genes")
-    mtable <- print_de_table(genelist = parse_input[["mirnas"]],
+    mtable <- print_de_table(genelist = data()[["mirnas"]],
                              de_table = mirna_de_table,
                              counttype = "mirnas")
-    norm_data_type <- expr_table(parse_input[["genes"]], utr_normcounts)
-    log2_data_type <- expr_table(parse_input[["genes"]], utr_log2)
+    norm_data_type <- expr_table(data()[["genes"]], utr_normcounts)
+    log2_data_type <- expr_table(data()[["genes"]], utr_log2)
     
-    norm_mirna_data_type <- expr_table(parse_input[["mirnas"]], mirna_normcounts)
-    log2_mirna_data_type <- expr_table(parse_input[["mirnas"]], mirna_log2)
+    norm_mirna_data_type <- expr_table(data()[["mirnas"]], mirna_normcounts)
+    log2_mirna_data_type <- expr_table(data()[["mirnas"]], mirna_log2)
     return(list("gplot" = gplot,
                 "num_genes" = num_genes,
                 "mplot" = mplot,
@@ -462,51 +556,6 @@ server <- function(input, output) {
     },
   )  
   
-  
-  # output$save_pdf_plots <- downloadHandler(
-  #   filename <- function() {
-  #     paste0(Sys.Date(), "_plots.pdf")
-  #   },
-  #   content <- function(file) {
-  #     plot_gene <- F
-  #     plot_mirna <- F
-  #     
-  #     gene_plot <- press_submit()[["gplot"]]
-  #     num_gene <- press_submit()[["num_genes"]]
-  #     
-  #     mirna_plot <- press_submit()[["mplot"]]
-  #     num_mirna <- press_submit()[["num_mirnas"]]
-  #     
-  #     if(num_gene > 0) {
-  #       plot_gene <- T
-  #     }
-  #     if(num_mirna > 0) {
-  #       plot_mirna <- T
-  #     }
-  #     
-  #     if(plot_gene & plot_mirna) {
-  #       use_height <- max(num_gene, num_mirna)
-  #       
-  #       ggsave(file,
-  #              arrangeGrob(gene_plot,mirna_plot, ncol = 2),
-  #              device = "pdf", height = use_height*3,
-  #              width = 8)
-  #     }
-  #     else if(plot_gene & plot_mirna == F) {
-  #       use_height <- num_gene
-  #       ggsave(file, gene_plot,
-  #              device = "pdf", height = use_height*3,
-  #              width = 4)
-  #     }
-  #     else {
-  #       use_height <- num_mirna
-  #       ggsave(file, mirna_plot,
-  #              device = "pdf", height = use_height*3,
-  #              width = 4)
-  #     }
-  #   },
-  # )  
-  # 
   output$save_txt_de_genes <- downloadHandler(
     filename <- function() {
       paste0(Sys.Date(), "_de_genes.txt")
@@ -626,6 +675,17 @@ server <- function(input, output) {
                 quote = F, row.names = F)
     }
   )
+  
+  output$save_genelists <- downloadHandler(
+    filename <- function() {
+      paste0(Sys.Date(), "_study_gene_lists.txt")
+    },
+    content <- function(file) {
+      write.table(pub_genes_split, file,
+                  quote = F, sep = "\t", col.names = T, row.names = F)
+    }
+  )
+  
   
 }
 
