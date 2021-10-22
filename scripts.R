@@ -1,23 +1,7 @@
-# load("data/pituitary_mirna_counts.rda")
-# load("data/pituitary_utr_counts.rda")
-# 
-set.seed(2)
 # Libraries
 library(dplyr)
-library(stringr)
-library(edgeR)
 library(reshape2)
-library(RColorBrewer)
 library(ggplot2)
-library(ggpubr)
-library(scales)
-library(colorspace)
-library(EDASeq)
-library(biomaRt)
-library(gridExtra)
-library(grid)
-library(cowplot)
-library(UpSetR)
 
 # Load in UTR and miRNA counts
 utr_obj <- readRDS("data/pit_utr_2019__RUV_k2_set1_2019-07-03.rds")
@@ -70,15 +54,15 @@ pub_genes_split <- data.frame(ID = rep.int(pub_genes$gene_symbol, sapply(splitte
 
 gene_ensembl_convert <- readRDS("data/20211015_ensembl_gene_id_mgi_biomart_conversion.rds")
 # genelist <- "let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,test"
-# genelist <- "let-7a-5p,mmu-let-7e-5p,test"
+genelist <- "let-7a-5p,mmu-let-7e-5p,test"
 # genelist <- "ENSMUSG00000027120.7,test" # need to fix
-genelist <- "test"
+# genelist <- "test"
 # test_file <- read.table("data/example_input_genes.txt", header = F)
 parse_list <- function(genelist, type) {
   if(type == "text") {
     genelist <- unlist(strsplit(genelist, ","))
   }
-  
+
   if(type == "file") {
     genelist <- genelist[,1]
   }
@@ -197,14 +181,11 @@ exprplot_hhtheme <- function(genelist,
       theme(strip.text = element_text(size=18),
             axis.text = element_text(size=18 - 2, color="black"),
             axis.title = element_text(size=18),
-            # strip.background = element_rect(color = "gray50") ,
             legend.position = "top", text = element_text(size = 18))+
-      # strip.background = element_rect(colour = "red", fill = alpha("blue",0.2) )) +
       scale_x_continuous(breaks = x_breaks) +
       guides(shape = F)
     # print(p)
   } else {
-    # print(paste0("Genes/miRNAs not found in count data", genelist))
     p <- ggplot() +
       theme_void() +
       geom_text(aes(0,0,label=paste0("No ", counttype, " inputted found in count data.")), size = 5) +
