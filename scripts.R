@@ -2,16 +2,26 @@
 library(dplyr)
 library(reshape2)
 library(ggplot2)
+# source("http://bioconductor.org/biocLite.R")
+# biocLite("EDASeq")
 
 # Load in UTR and miRNA counts
-utr_obj <- readRDS("data/pit_utr_2019__RUV_k2_set1_2019-07-03.rds")
-colnames(utr_obj) <- substr(colnames(utr_obj),8,50)
-utr_normcounts <- normCounts(utr_obj)
-utr_log2 <- log2(normCounts(utr_obj) + 1)
+# utr_obj <- readRDS("data/pit_utr_2019__RUV_k2_set1_2019-07-03.rds")
+# colnames(utr_obj) <- substr(colnames(utr_obj),8,50)
+# saveRDS(list(norm = normCounts(utr_obj),
+#              meta = pData(utr_obj)), "data/pit_utr_2019__RUV_k2_set1_2019-07-03_counts.rds")
+utr_obj <- readRDS("data/pit_utr_2019__RUV_k2_set1_2019-07-03_counts.rds")
+utr_normcounts <- utr_obj[["norm"]]
+utr_log2 <- log2(utr_normcounts + 1)
+utr_meta <- utr_obj[["meta"]]
 
-mirna_obj <- readRDS("data/RUV_corrected_pit_srna-seq_counts_combined.rds")
-mirna_normcounts <- normCounts(mirna_obj)
-mirna_log2 <- log2(normCounts(mirna_obj) + 1)
+# mirna_obj <- readRDS("data/RUV_corrected_pit_srna-seq_counts_combined.rds")
+# saveRDS(list(norm = normCounts(mirna_obj),
+#              meta = pData(mirna_obj)), "data/RUV_corrected_pit_srna-seq_counts_combined_counts.rds")
+mirna_obj <- readRDS("data/RUV_corrected_pit_srna-seq_counts_combined_counts.rds")
+mirna_normcounts <- mirna_obj[["norm"]]
+mirna_log2 <- log2(mirna_normcounts + 1)
+mirna_meta <- mirna_obj[["meta"]]
 
 # Load in UTR and miRNA DE comparisons
 utr_de <- readRDS("data/pit_utr_2019_de_result_list_2019-07-03.rds")
@@ -54,7 +64,7 @@ pub_genes_split <- data.frame(ID = rep.int(pub_genes$gene_symbol, sapply(splitte
 
 gene_ensembl_convert <- readRDS("data/20211015_ensembl_gene_id_mgi_biomart_conversion.rds")
 # genelist <- "let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,test"
-genelist <- "let-7a-5p,mmu-let-7e-5p,test"
+# genelist <- "let-7a-5p,mmu-let-7e-5p,test"
 # genelist <- "ENSMUSG00000027120.7,test" # need to fix
 # genelist <- "test"
 # test_file <- read.table("data/example_input_genes.txt", header = F)
@@ -69,7 +79,7 @@ parse_list <- function(genelist, type) {
 
   
   # 1: match gene symbols with utr row names
-  keep_genes <- genelist[which(genelist %in% rownames(utr_obj))]
+  keep_genes <- genelist[which(genelist %in% rownames(utr_normcounts))]
   if(length(keep_genes) > 0) {
     genelist <- genelist[-which(genelist %in% keep_genes)]
   } 
@@ -91,7 +101,7 @@ parse_list <- function(genelist, type) {
     genelist <- genelist[-c(which(genelist %in% ens_match), which(genelist %in% ensid_match))]
   }
   
-  keep_mirnas <- genelist[which(genelist %in% rownames(mirna_obj))]
+  keep_mirnas <- genelist[which(genelist %in% rownames(mirna_normcounts))]
   
   if(length(keep_mirnas) > 0) {
     genelist <- genelist[-which(genelist %in% keep_mirnas)]
@@ -100,7 +110,7 @@ parse_list <- function(genelist, type) {
   # 3B: match non-matches with the addition of mmu- prefix
 
   genelist <- paste0("mmu-", genelist)
-  mmu_match <- genelist[which(genelist %in% rownames(mirna_obj))]
+  mmu_match <- genelist[which(genelist %in% rownames(mirna_normcounts))]
   keep_mirnas <- c(keep_mirnas, mmu_match) # this is a valid miRNA list
   
   if(length(mmu_match) > 0) {
