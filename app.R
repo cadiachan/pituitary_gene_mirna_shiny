@@ -1,6 +1,5 @@
 library(shiny)
 
-
 source("scripts.R")
 # Define UI ----
 ui <- fluidPage(
@@ -362,7 +361,7 @@ server <- function(input, output) {
     
     gplot <- exprplot_hhtheme(genelist = data()[["genes"]],
                               count_data = utr_log2,
-                              metadata = pData(utr_obj),
+                              metadata = utr_meta,
                               counttype = "genes")
     num_genes <- length(gplot$plot_env$use_genelist)
     
@@ -372,7 +371,7 @@ server <- function(input, output) {
     
     mplot <- exprplot_hhtheme(genelist = data()[["mirnas"]],
                               count_data = mirna_log2,
-                              metadata = pData(mirna_obj),
+                              metadata = mirna_meta,
                               counttype = "mirnas")
     num_mirnas <- length(mplot$plot_env$use_genelist)
     
@@ -447,6 +446,7 @@ server <- function(input, output) {
   observeEvent(input$submit, {
     observeEvent(input$pub_study, {
       if(length(input$pub_study) > 0) {
+        print(input$pub_study)
         output$de_gene_table <- renderTable({
           de_genes <- press_submit()[["gtable"]]
           return(add_study(de_genes,
