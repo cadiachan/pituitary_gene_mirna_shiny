@@ -9,5 +9,5 @@ Shiny app to visualize DE genes and miRNAs in the postnatal mouse pituitary glan
 
 ## Example
 1. Navigate to the `Data Browser` tab. 
-2. Enter in a comma-separated list of genes and/or miRNAs or upload `example_input_file.txt` (located in `data/` directory) or e.
+2. Enter in a comma-separated list of genes and/or miRNAs or upload `example_input_file.txt` (located in `data/` directory).
 3. Press `Submit` to run.
