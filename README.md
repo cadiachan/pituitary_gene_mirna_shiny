@@ -5,12 +5,6 @@ Shiny app to visualize DE genes and miRNAs in the postnatal mouse pituitary glan
 1. Clone git repository to local directory.
 2. Navigate to directory containing cloned repository.
 3. Install dependencies in R with `devtools::install()` (Set Working Directory to path containing `DESCRIPTION`).
-4. Install EDASeq using Bioconductor:  
-```
-if (!requireNamespace("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")    
-BiocManager::install("EDASeq")
-```
 4. Open `app.R` in RStudio. Click "Run App" to run locally.
 
 ## Example
