@@ -27,6 +27,21 @@ mirna_meta <- mirna_obj[["meta"]]
 utr_de <- readRDS("data/pit_utr_2019_de_result_list_2019-07-03.rds")
 mirna_de <- readRDS("data/mirna_pit_all_edgeR.RDS")
 
+# Rename comparisons in utr_de so that they match comparisons in mirna_de
+names(utr_de) <- c(names(utr_de)[1:5],
+                   "d22_12_M",
+                   "d27_22_M",
+                   "d32_27_M",
+                   "d37_32_M",
+                   "d22_12_F",
+                   "d27_22_F",
+                   "d32_27_F",
+                   "d37_32_F",
+                   "d37_12_M",
+                   "d37_12_F",
+                   "d37_22_M",
+                   "d37_22_F")
+
 # Reformat DE tables
 utr_de_table <- bind_rows(lapply(names(utr_de), function(x) mutate(utr_de[[x]], comparison = x)))
 utr_de_table <- utr_de_table[,c(7,1,2,6,8)] %>%
@@ -47,7 +62,7 @@ pub_genes <- read.table("data/pituitary_puberty_genes_combined_2020-09-28.txt",
 pub_genes <- dplyr::rename(pub_genes, gene_symbol = MGI.symbol)
 splitted <- strsplit(as.character(pub_genes$source), ";")
 pub_genes_split <- data.frame(ID = rep.int(pub_genes$gene_symbol, sapply(splitted, length)),
-           source = unlist(splitted))
+                              source = unlist(splitted))
 
 
 
@@ -63,7 +78,7 @@ pub_genes_split <- data.frame(ID = rep.int(pub_genes$gene_symbol, sapply(splitte
 # saveRDS(ensemble2gene, "data/20211015_ensembl_gene_id_mgi_biomart_conversion.rds")
 
 gene_ensembl_convert <- readRDS("data/20211015_ensembl_gene_id_mgi_biomart_conversion.rds")
-# genelist <- "let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,test"
+genelist <- "let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,test"
 # genelist <- "let-7a-5p,mmu-let-7e-5p,test"
 # genelist <- "ENSMUSG00000027120.7,test" # need to fix
 # genelist <- "test"
@@ -72,11 +87,11 @@ parse_list <- function(genelist, type) {
   if(type == "text") {
     genelist <- unlist(strsplit(genelist, ","))
   }
-
+  
   if(type == "file") {
     genelist <- genelist[,1]
   }
-
+  
   
   # 1: match gene symbols with utr row names
   keep_genes <- genelist[which(genelist %in% rownames(utr_normcounts))]
@@ -108,7 +123,7 @@ parse_list <- function(genelist, type) {
   }
   
   # 3B: match non-matches with the addition of mmu- prefix
-
+  
   genelist <- paste0("mmu-", genelist)
   mmu_match <- genelist[which(genelist %in% rownames(mirna_normcounts))]
   keep_mirnas <- c(keep_mirnas, mmu_match) # this is a valid miRNA list
@@ -233,3 +248,159 @@ add_study <- function(use_table, study) {
     arrange(desc(abs(log2FC)))
   return(utr_de_merge)
 }
+
+add_study_corr <- function(use_table, study,
+                           de_filt = T) {
+  pub_genes_use <- filter(pub_genes_split, source %in% study)
+  corr_merge <- dplyr::rename(use_table, ID = gene)
+  corr_merge <- dplyr::left_join(corr_merge, pub_genes_use, by = "ID")
+  if(de_filt) {
+    corr_merge <- corr_merge %>% group_by(pair, rho, fdr,mirna,ID, database,gene_comparison, mirna_comparison) %>%
+      summarise(source  = toString(source)) %>%
+      arrange(desc(abs(rho)))
+  }
+  else {
+    corr_merge <- corr_merge %>% group_by(pair, rho, fdr,mirna,ID, database) %>%
+      summarise(source  = toString(source)) %>%
+      arrange(desc(abs(rho)))
+  }
+  return(corr_merge)
+}
+
+corr <- readRDS("data/pit_mirna_mrna_pairs_w_correlation.rds")
+corr <- corr[, -grep("Pd", colnames(corr))]
+corr <- corr[, -grep("pval", colnames(corr))]
+corr <- filter(corr, rho < 0 & fdr < 0.1)
+corr <- mutate(corr, fdr = -log10(fdr)) %>%
+  dplyr::rename(`-log10(FDR)` = fdr)
+utr_de_corr <- mutate(utr_de_table, comparison_dir = ifelse(log2FC > 0,
+                                                            "up",
+                                                            "down")) %>%
+  dplyr::select(ID, comparison, comparison_dir) %>%
+  dplyr::rename(gene = ID, gene_comparison = comparison, gene_dir = comparison_dir)
+mirna_de_corr <- mutate(mirna_de_table, comparison_dir = ifelse(log2FC > 0,
+                                                                "up",
+                                                                "down")) %>% 
+  dplyr::select(ID, comparison, comparison_dir) %>%
+  dplyr::rename(mirna = ID, mirna_comparison = comparison, mirna_dir = comparison_dir)
+# mirnalist <- c("mmu-miR-224-5p", "mmu-miR-383-5p", "mmu-let-7a-5p",
+#                sample(rownames(mirna_log2), 20))
+# genelist <- c("Fshb", "Lhb", "Ammecr1",
+#               sample(rownames(utr_log2), 20))
+print_corr_table <- function(mirnalist = NULL,
+                             genelist = NULL,
+                             de_filt = T) {
+  if(de_filt) {
+    if(!is.null(mirnalist)) {
+      if(length(which(mirnalist %in% corr$mirna)) > 0) {
+        test_de <- length(which(unique(mirnalist) %in% mirna_de_table$ID))
+        if(test_de == 0) {
+          cortable <- data.frame(paste0("No DE miRNAs inputted."))
+          colnames(cortable) <- ""
+          return(cortable)
+        }
+        else {
+          cortable <- filter(corr, mirna %in% mirnalist)
+        }
+      } else {
+        cortable <- data.frame(paste0(mirnalist, " not found in correlation table."))
+        colnames(cortable) <- ""
+        return(cortable)
+      }
+    }
+    else if(!is.null(genelist)) {
+      if(length(which(genelist %in% corr$gene)) > 0) {
+        test_de <- length(which(unique(genelist) %in% utr_de_table$ID))
+        if(test_de == 0) {
+          cortable <- data.frame(paste0("No DE genes inputted."))
+          colnames(cortable) <- ""
+          return(cortable)
+        }
+        else {
+          cortable <- filter(corr, gene %in% genelist)
+        }
+      } else {
+        cortable <- data.frame(paste0(genelist, " not found in correlation table."))
+        colnames(cortable) <- ""
+        return(cortable)
+      }
+      
+    }
+    else{ 
+      cortable <- data.frame(paste0("Please input mirna list or gene list"))
+      colnames(cortable) <- ""
+      return(cortable)
+    }
+    cortable <- left_join(cortable, utr_de_corr, by = "gene") %>%
+      left_join(., mirna_de_corr, by = "mirna") 
+    sextable <- filter(cortable, grepl("sex", gene_comparison) & grepl("sex", mirna_comparison)) %>%
+      filter(gene_dir != mirna_dir)
+    agetable <- filter(cortable,!grepl("sex", gene_comparison)) %>%
+      mutate(gene_comparison_nosex = substr(gene_comparison, 1,6),
+             mirna_comparison_nosex = substr(mirna_comparison, 1,6)) %>%
+      filter(gene_comparison_nosex == mirna_comparison_nosex & gene_dir != mirna_dir) %>%
+      dplyr::select(-gene_comparison_nosex, -mirna_comparison_nosex)
+    cortable <- bind_rows(sextable, agetable) %>%
+      mutate(gene_comparison = paste0(gene_comparison, "_", gene_dir),
+             mirna_comparison = paste0(mirna_comparison, "_", mirna_dir)) %>%
+      dplyr::select(-gene_dir,-mirna_dir)
+    cortable_aggr <- aggregate(cortable$gene_comparison,
+                               by = list(cortable$pair),
+                               function(x) toString(unique(x))) %>%
+      dplyr::rename(pair = Group.1, gene_comparison = x)
+    cortable_aggr_mirna <- aggregate(cortable$mirna_comparison,
+                                     by = list(cortable$pair),
+                                     function(x) toString(unique(x))) %>%
+      dplyr::rename(pair = Group.1, mirna_comparison = x)
+    cortable <- unique(inner_join(dplyr::select(cortable, -gene_comparison, -mirna_comparison),
+                                  cortable_aggr, by = "pair") %>%
+                         inner_join(., cortable_aggr_mirna, by = "pair"))
+  }
+  else {
+    if(!is.null(mirnalist)) {
+      if(length(which(mirnalist %in% corr$mirna)) > 0) {
+        cortable <- filter(corr, mirna %in% mirnalist)
+      } else {
+        cortable <- data.frame(paste0(mirnalist, " not found in correlation table."))
+        colnames(cortable) <- ""
+        return(cortable)
+      }
+    }
+    else if(!is.null(genelist)) {
+      if(length(which(genelist %in% corr$gene)) > 0) {
+        cortable <- filter(corr, gene %in% genelist)
+      } else {
+        cortable <- data.frame(paste0(genelist, " not found in correlation table."))
+        colnames(cortable) <- ""
+        return(cortable)
+      }
+    }
+    else{ 
+      cortable <- data.frame(paste0("Please input mirna list or gene list"))
+      colnames(cortable) <- ""
+      return(cortable)
+    }
+    cortable <- left_join(cortable, utr_de_corr, by = "gene") %>%
+      left_join(., mirna_de_corr, by = "mirna")
+    cortable <- mutate(cortable, gene_comparison = paste0(gene_comparison, "_", gene_dir),
+                       mirna_comparison = paste0(mirna_comparison, "_", mirna_dir)) %>%
+      dplyr::select(-gene_dir,-mirna_dir)
+    cortable_aggr <- aggregate(cortable$gene_comparison,
+                               by = list(cortable$pair),
+                               function(x) toString(unique(x))) %>%
+      dplyr::rename(pair = Group.1, gene_comparison = x)
+    cortable_aggr_mirna <- aggregate(cortable$mirna_comparison,
+                                     by = list(cortable$pair),
+                                     function(x) toString(unique(x))) %>%
+      dplyr::rename(pair = Group.1, mirna_comparison = x)
+    cortable <- unique(inner_join(dplyr::select(cortable, -gene_comparison, -mirna_comparison),
+                                  cortable_aggr, by = "pair") %>%
+                         inner_join(., cortable_aggr_mirna, by = "pair"))
+    cortable <- mutate(cortable, gene_comparison = ifelse(gene_comparison == "NA_NA", NA, gene_comparison)) %>%
+      mutate(mirna_comparison = ifelse(mirna_comparison == "NA_NA", NA, mirna_comparison))
+    print(cortable)
+  }
+  return(cortable)
+}
+
+
