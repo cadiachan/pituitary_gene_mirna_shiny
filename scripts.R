@@ -2,6 +2,7 @@
 library(dplyr)
 library(reshape2)
 library(ggplot2)
+library(stringr)
 # source("http://bioconductor.org/biocLite.R")
 # biocLite("EDASeq")
 
@@ -44,12 +45,18 @@ names(utr_de) <- c(names(utr_de)[1:5],
 
 # Reformat DE tables
 utr_de_table <- bind_rows(lapply(names(utr_de), function(x) mutate(utr_de[[x]], comparison = x)))
+utr_de_all_table <- utr_de_table[,c(7,1,2,6,8)] %>%
+  mutate(FDR = -log10(FDR)) %>%
+  dplyr::rename(ensembl_id = genes, ID = genename, log2FC = logFC, `-log10(FDR)` = FDR)
 utr_de_table <- utr_de_table[,c(7,1,2,6,8)] %>%
   filter(., abs(logFC) > log2(1.5) & FDR < 0.05) %>%
   mutate(FDR = -log10(FDR)) %>%
   dplyr::rename(ensembl_id = genes, ID = genename, log2FC = logFC, `-log10(FDR)` = FDR)
 
 mirna_de_table <- bind_rows(lapply(names(mirna_de), function(x) mutate(mirna_de[[x]], comparison = x)))
+mirna_de_all_table <-  mirna_de_table[,c(1,2,6,ncol(mirna_de_table))] %>%
+  mutate(FDR = -log10(FDR)) %>%
+  dplyr::rename(ID = genes, log2FC = logFC, `-log10(FDR)` = FDR)
 mirna_de_table <- mirna_de_table[,c(1,2,6,ncol(mirna_de_table))] %>%
   filter(., abs(logFC) > log2(1.5) & FDR < 0.05) %>%
   mutate(FDR = -log10(FDR)) %>%
@@ -65,7 +72,6 @@ pub_genes_split <- data.frame(ID = rep.int(pub_genes$gene_symbol, sapply(splitte
                               source = unlist(splitted))
 
 
-
 # Parse input gene list
 # Precompute ensembl gene ids from gene symbols present as rownames in utr object using biomart.
 # Script only loads in the dataframe
@@ -78,7 +84,7 @@ pub_genes_split <- data.frame(ID = rep.int(pub_genes$gene_symbol, sapply(splitte
 # saveRDS(ensemble2gene, "data/20211015_ensembl_gene_id_mgi_biomart_conversion.rds")
 
 gene_ensembl_convert <- readRDS("data/20211015_ensembl_gene_id_mgi_biomart_conversion.rds")
-genelist <- "let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,test"
+# genelist <- "let-7a-5p,mmu-let-7e-5p,test,fshb,ENsmUSG00000027120.7,mmu-miR-224-5p,mir-224-5p,MIR-383-5P"
 # genelist <- "let-7a-5p,mmu-let-7e-5p,test"
 # genelist <- "ENSMUSG00000027120.7,test" # need to fix
 # genelist <- "test"
@@ -86,6 +92,7 @@ genelist <- "let-7a-5p,mmu-let-7e-5p,ENSMUSG00000027120.7,test"
 parse_list <- function(genelist, type) {
   if(type == "text") {
     genelist <- unlist(strsplit(genelist, ","))
+    genelist <- gsub(" ", "", genelist) # In case user inputs comma separated with space
   }
   
   if(type == "file") {
@@ -94,21 +101,22 @@ parse_list <- function(genelist, type) {
   
   
   # 1: match gene symbols with utr row names
-  keep_genes <- genelist[which(genelist %in% rownames(utr_normcounts))]
+  keep_genes <- str_to_sentence(genelist[which(tolower(genelist) %in% tolower(rownames(utr_normcounts)))])
   if(length(keep_genes) > 0) {
-    genelist <- genelist[-which(genelist %in% keep_genes)]
+    genelist <- genelist[-which(tolower(genelist) %in% tolower(keep_genes))]
   } 
   
   
   # 2: try to convert non-matches from ensembl ID to gene symbol
   # Parse string for "ENSMUSG" to find a mouse ensembl genes
-  ens_match <- genelist[grep("ENSMUSG", genelist)]
+  ens_match <- genelist[grep("ENSMUSG", genelist, ignore.case = T)] 
   ensid_match <- ens_match[grep(".", ens_match, fixed = T)]
   ens_match <- ens_match[-grep(".", ens_match, fixed = T)]
   
+
   use_gene_ensembl_convert <- filter(gene_ensembl_convert,
-                                     ensembl_gene_id %in% ens_match |
-                                       ensembl_gene_id_version %in% ensid_match)$mgi_symbol
+                                     ensembl_gene_id %in% toupper(ens_match) |   # Ensure ENS matches are upper case
+                                       ensembl_gene_id_version %in% toupper(ensid_match))$mgi_symbol   # Ensure ENS matches are upper case
   keep_genes <- c(keep_genes, use_gene_ensembl_convert) # this is a valid gene list
   
   # 3A: match non-matches with mirna row names
@@ -116,6 +124,7 @@ parse_list <- function(genelist, type) {
     genelist <- genelist[-c(which(genelist %in% ens_match), which(genelist %in% ensid_match))]
   }
   
+  genelist <- gsub("mir", "miR", tolower(genelist), ignore.case = T) # Allows users to enter mirna ids without case sensitive format
   keep_mirnas <- genelist[which(genelist %in% rownames(mirna_normcounts))]
   
   if(length(keep_mirnas) > 0) {
@@ -223,45 +232,63 @@ exprplot_hhtheme <- function(genelist,
 print_de_table <- function(genelist,
                            de_table,
                            counttype) {
+  
   if(length(genelist) > 0) {
     dtable <- filter(de_table, ID %in% genelist) %>%
       arrange(desc(abs(log2FC)))
-  }
-  else {
+  } else {
     dtable <- data.frame(paste0("No ", counttype, " inputted."))
     colnames(dtable) <- ""
   }
   
   if(nrow(dtable) == 0) {
-    dtable <- data.frame(paste0(genelist, " is not DE."))
+    dtable <- data.frame(paste0(genelist, " does not pass set cutoff."))
     colnames(dtable) <- ""
-  }
-  # print(dtable)
+  } 
+  # else {
+  #   if(counttype == "genes") {
+  #     pub_genes_use <- filter(pub_genes_split, source %in% unique(pub_genes_split$source))
+  #     dtable <- left_join(dtable, pub_genes_use, by = "ID")
+  #     dtable <- dtable %>% group_by(ID, ensembl_id, log2FC, `-log10(FDR)`, comparison) %>%
+  #       summarise(source  = toString(source)) %>%
+  #       arrange(desc(abs(log2FC)))
+  #   }
+  # }
   return(dtable)
 }
 
-add_study <- function(use_table, study) {
-  pub_genes_use <- filter(pub_genes_split, source %in% study)
-  utr_de_merge <- left_join(use_table, pub_genes_use, by = "ID")
-  utr_de_merge <- utr_de_merge %>% group_by(ID, ensembl_id, log2FC, `-log10(FDR)`, comparison) %>%
-    summarise(source  = toString(source)) %>%
-    arrange(desc(abs(log2FC)))
-  return(utr_de_merge)
+pub_genes_key <- as.data.frame(matrix(c(1:9, c("Perry2014", "Day2015_GWAS_VB",
+                              "Day2017_nearest", "Hollis2020_GWAS_VB_FH",
+                              "Ye2015_PA_GWAS", "Fang2016_CPHD",
+                              "Hauser2019_PA", "Kurtoglu2019_hypopituitarism",
+                              "IHH/Kallmann")), ncol = 2,
+                     dimnames = list(NULL,c("study_id", "source"))))
+pub_genes_split <- left_join(pub_genes_split, pub_genes_key, by = "source")
+
+add_study <- function(use_table, study=unique(pub_genes_split$study_id)) {
+  if(ncol(use_table) > 1) { # Check to see that dataframe has DE info and is not just an error message
+    pub_genes_use <- filter(pub_genes_split, study_id %in% study)
+    utr_de_merge <- left_join(use_table, pub_genes_use, by = "ID")
+    utr_de_merge <- utr_de_merge %>% group_by(ID, ensembl_id, log2FC, `-log10(FDR)`, comparison) %>%
+      summarise(study_id = toString(study_id)) %>%
+      arrange(desc(abs(log2FC)))
+    return(utr_de_merge)
+  } else { return(use_table)}
 }
 
-add_study_corr <- function(use_table, study,
+add_study_corr <- function(use_table, study=unique(pub_genes_split$study_id),
                            de_filt = T) {
-  pub_genes_use <- filter(pub_genes_split, source %in% study)
+  pub_genes_use <- filter(pub_genes_split, study_id %in% study)
   corr_merge <- dplyr::rename(use_table, ID = gene)
   corr_merge <- dplyr::left_join(corr_merge, pub_genes_use, by = "ID")
   if(de_filt) {
     corr_merge <- corr_merge %>% group_by(pair, rho, fdr,mirna,ID, database,gene_comparison, mirna_comparison) %>%
-      summarise(source  = toString(source)) %>%
+      summarise(study_id  = toString(study_id)) %>%
       arrange(desc(abs(rho)))
   }
   else {
     corr_merge <- corr_merge %>% group_by(pair, rho, fdr,mirna,ID, database) %>%
-      summarise(source  = toString(source)) %>%
+      summarise(study_id  = toString(study_id)) %>%
       arrange(desc(abs(rho)))
   }
   return(corr_merge)
