@@ -21,31 +21,38 @@ ui <- fluidPage(
                         "(Fix link once data is available)"),
                       br(),
                       h2("Features"),
+                      br(),
                       h3("Data Browser"),
-                      p("- Visualize gene and miRNA expression plots across postnatal ages and between sexes."),
-                      p("- Quantify log2FC and FDR for DE genes and miRNAs for each comparison."),
-                      p("- Intersect genes of interest with puberty- and pituitary disease-related gene list compendium curated from relevant published studies."),
-                      p("- Output normalized and log2(normalized) counts for genes and miRNAs of interest."),
+                      tags$ul(
+                        tags$li(p("Visualize gene and miRNA expression plots across postnatal ages and between sexes.")),
+                        tags$li(p("Quantify log2FC and FDR for DE genes and miRNAs for each comparison (with or without cutoffs).")),
+                        tags$li(p("Intersect genes of interest with puberty- and pituitary disease-related gene list compendium curated from relevant published studies.")),
+                        tags$li(p("Output normalized and log2(normalized) counts for genes and miRNAs of interest."))
+                      ),
                       br(),
                       h3("miRNA-Gene Target Browser"),
-                      p("- "),
+                      tags$ul(
+                        tags$li(p("Explore miRNAs and their negatively correlated gene targets.")),
+                        tags$li(p("Output miRNA-gene targets as input for Cytoscape to visualize results as a miRNA-gene network")),
+                        tags$li(p("Output the list of miRNAs and their gene targets as input for Data Browser to visualize their expression and quantify their differential expression."))
+                      ),
                       br(),
                       br(),
                       br(),
-                      h2("To-do <priority>"),
-                      p("- Add in miRNA-gene correlation tab"),
-                      p("- Add in default lists to show DE genes and miRNAs from comparisons in the manuscript"),
-                      p("- Design graphical abstract for <Home> tab"),
-                      br(),
-                      h2("To-do <possible things to add>"),
-                      p("- Add cell-type specificity to DE genes based on scMappR results?"),
-                      p("- qPCR tab from Hou et al 2017"),
-                      p("- Add filter for sex-bias or age-bias in DE tables (redundant feature of default lists?)")
+                      # h2("To-do <priority>"),
+                      # p("- Add in default lists to show DE genes and miRNAs from comparisons in the manuscript"),
+                      # p("- Design graphical abstract for <Home> tab"),
+                      # br(),
+                      # h2("To-do <possible things to add>"),
+                      # p("- Add cell-type specificity to DE genes based on scMappR results?"),
+                      # p("- qPCR tab from Hou et al 2017"),
+                      # p("- Add filter for sex-bias or age-bias in DE tables (redundant feature of default lists?)")
              ),
              #### Data Browser ####
              tabPanel("Data Browser", icon = icon("chart-bar"),
                       sidebarLayout(
                         sidebarPanel(
+                          
                           shinyjs::useShinyjs(),
                           id = "side-panel",
                           width = 3,
@@ -54,9 +61,9 @@ ui <- fluidPage(
                           
                           radioButtons("input_type",
                                        label = NULL,
-                                       choices = list("Type in genes/miRNAs" = 1, "Upload file" = 2),
-                                       selected = 1,
-                                       inline = T),
+                                       choices = list("Type in genes/miRNAs" = 1, "Upload file" = 2,
+                                                      "Sex-biased genes and miRNAs" = 3),
+                                       selected = 1),
                           uiOutput("add_helper_input"),
                           uiOutput("add_input_ui"),
                           div(style="display:inline-block",
@@ -68,50 +75,12 @@ ui <- fluidPage(
                                            label = "Reset")),
                           br(),
                           br(),
-                          # h3("Select studies to intersect"),
-                          # checkboxGroupInput("pub_study",
-                          #                    label = h4("Puberty-related gene lists"),
-                          #                    choiceNames = list(
-                          #                      HTML("Perry 2014 <a href = 'https://pubmed.ncbi.nlm.nih.gov/25231870/'>(PMID: 25231870)</a>"),
-                          #                      HTML("Day 2015 <a href = 'https://pubmed.ncbi.nlm.nih.gov/26548314/'>(PMID: 26548314)</a>"),
-                          #                      HTML("Day 2017 <a href = 'https://pubmed.ncbi.nlm.nih.gov/28436984/'>(PMID: 28436984)</a>"),
-                          #                      HTML("Hollis 2020 <a href = 'https://pubmed.ncbi.nlm.nih.gov/32210231/'>(PMID: 32210231)</a>"),
-                          #                      "IHH/Kallmann"
-                          #                    ),
-                          #                    choiceValues = list("Perry2014",
-                          #                                        "Day2015_GWAS_VB",
-                          #                                        "Day2017_nearest",
-                          #                                        "Hollis2020_GWAS_VB_FH",
-                          #                                        "IHH/Kallmann"
-                          #                    ),
-                          #                    selected = c("Perry2014",
-                          #                                 "Day2015_GWAS_VB",
-                          #                                 "Day2017_nearest",
-                          #                                 "Hollis2020_GWAS_VB_FH",
-                          #                                 "IHH/Kallmann")),
-                          # checkboxGroupInput("pit_study",
-                          #                    label = h4("Pituitary-related gene lists"),
-                          #                    choiceNames = list(
-                          #                      HTML("Ye 2015 <a href = 'https://pubmed.ncbi.nlm.nih.gov/26029870/'>(PMID: 26029870)</a>"),
-                          #                      HTML("Fang 2016 <a href = 'https://pubmed.ncbi.nlm.nih.gov/27828722/'>(PMID: 27828722)</a>"),
-                          #                      HTML("Hauser 2019 <a href = 'https://pubmed.ncbi.nlm.nih.gov/31139150/'>(PMID: 31139150)</a>"),
-                          #                      HTML("Kurtoglu 2019 <a href = 'https://pubmed.ncbi.nlm.nih.gov/29739730/'>(PMID: 29739730)</a>")
-                          #                    ),
-                          #                    choiceValues = list("Ye2015_PA_GWAS",
-                          #                                        "Fang2016_CPHD",
-                          #                                        "Hauser2019_PA",
-                          #                                        "Kurtoglu2019_hypopituitarism"
-                          #                    ),
-                          #                    selected = c("Ye2015_PA_GWAS",
-                          #                                 "Fang2016_CPHD",
-                          #                                 "Hauser2019_PA",
-                          #                                 "Kurtoglu2019_hypopituitarism")),
                           h4("Text input examples:"),
                           h4("Genes: Lhb,ENSMUSG00000027120.7"),
                           h4("miRNAs: mmu-miR-224-5p,miR-383-5p"),
                           br(),
                           helpText(h5("It is recommended to input <20 genes/miRNAs for viewing on the browser.")),
-                          helpText(h5("If more genes/miRNAs are inputted, expression values and DE table can be downloaded."))
+                          helpText(h5("If more genes/miRNAs are inputted, expression values and DE table can be downloaded.")),
                         ),
                         mainPanel(
                           shinyjs::useShinyjs(),
@@ -124,36 +93,69 @@ ui <- fluidPage(
                               verbatimTextOutput("input_err"),
                               verbatimTextOutput("invalid_genes"),
                               
-                              column(6,
+                              column(5,
                                      br(),
+                                     h3("Genes"),
                                      tags$div(id = "save_gene_plot_text", h4("Save gene expression plots: ")),
                                      downloadButton("save_png_plot_genes", ".png"),
                                      downloadButton("save_pdf_plot_genes", ".pdf"),
-                                     h3("Genes"),
                                      plotOutput("gene_plot",
                                                 height = "auto",
                                                 width = "70%")) ,
-                              column(6,
+                              column(5,
                                      br(),
+                                     h3("miRNAs"),
                                      tags$div(id = "save_mirna_plot_text", h4("Save miRNA expression plots: ")),
                                      downloadButton("save_png_plot_mirnas", ".png"),
                                      downloadButton("save_pdf_plot_mirnas", ".pdf"),
-                                     h3("miRNAs"),
                                      plotOutput("mirna_plot",
                                                 height = "auto",
-                                                width = "70%"))
+                                                width = "70%")),
+                              column(2,
+                                     sidebarPanel(
+                                       style = ("position:fixed;width:inherited"),
+                                       width = 2,
+                                       h4("Study ID"),
+                                       h5("1. Perry2014"),
+                                       h5("2. Day2015"),
+                                       h5("3. Day2017"),
+                                       h5("4. Hollis2020"),
+                                       h5("5. Ye2015"),
+                                       h5("6. Fang2016"),
+                                       h5("7. Hauser2019"),
+                                       h5("8. Kurtoglu2019"),
+                                       h5("9. IHH/Kallmann")
+                                     )
+                              )
                             ),
                             tabPanel("DE gene table",
                                      br(),
-                                     radioButtons("de_gene_filt",
-                                                  label = h3("Cutoff for DE gene table"),
-                                                  choices = list("abs(FC) > 1.5, FDR < 0.05" = 1, "No cutoff" = 2),
-                                                  selected = 1,
-                                                  inline = T),
-                                     tags$div(id = "save_de_gene_text", h4("Save DE gene table: ")),
-                                     downloadButton("save_txt_de_genes", ".txt"),
-                                     downloadButton("save_csv_de_genes", ".csv"),
-                                     tableOutput("de_gene_table"),
+                                     column(width = 10,
+                                            radioButtons("de_gene_filt",
+                                                         label = h3("Cutoff for DE gene table"),
+                                                         choices = list("abs(FC) > 1.5, FDR < 0.05" = 1, "No cutoff" = 2),
+                                                         selected = 1,
+                                                         inline = T),
+                                            tags$div(id = "save_de_gene_text", h4("Save DE gene table: ")),
+                                            downloadButton("save_txt_de_genes", ".txt"),
+                                            downloadButton("save_csv_de_genes", ".csv"),
+                                            
+                                            tableOutput("de_gene_table")),
+                                     column(width = 2,
+                                            sidebarPanel(
+                                              style = ("position:fixed;width:inherited"),
+                                              width = 2,
+                                              h4("Study ID"),
+                                              h5("1. Perry2014"),
+                                              h5("2. Day2015"),
+                                              h5("3. Day2017"),
+                                              h5("4. Hollis2020"),
+                                              h5("5. Ye2015"),
+                                              h5("6. Fang2016"),
+                                              h5("7. Hauser2019"),
+                                              h5("8. Kurtoglu2019"),
+                                              h5("9. IHH/Kallmann")
+                                            ))
                             ),
                             tabPanel("DE miRNA table",
                                      br(),
@@ -193,60 +195,89 @@ ui <- fluidPage(
                                      tableOutput("mirna_table")
                             )
                           )
-                        )) 
+                        )
+                      )
              ),
              #### miRNA-gene ####
              tabPanel(" miRNA-Gene Target Browser", icon = icon("project-diagram"),
                       sidebarLayout(
-                        sidebarPanel(
-                          shinyjs::useShinyjs(),
-                          id = "side-panel_2",
-                          width = 3,
-                          h3("Input a list of genes OR miRNAs"),
-                          # br(),
-                          # h4("Gene examples: 'Lhb', 'ENSMUSG00000027120.7'"),
-                          # h4("miRNA examples: 'mmu-miR-224-5p', 'miR-383-5p'"),
-                          radioButtons("input_type_2",
-                                       label = NULL,
-                                       choices = list("miRNA" = 1, "gene" = 2),
-                                       selected = 1,
-                                       inline = T),
-                          uiOutput("add_helper_input_2"),
-                          uiOutput("add_input_ui_2"),
-                          helpText(h5("Choose to show only differentially expressed (DE) miRNA-gene pairs or all miRNA-gene pairs.")),
-                          radioButtons("filt_choice_2",
-                                       label = NULL,
-                                       choices = list("DE" = 1, "All" = 2),
-                                       selected = 1,
-                                       inline = T),
-                          div(style="display:inline-block",
-                              actionButton("submit_2",
-                                           label = "Submit",
-                                           class = "btn-success")),
-                          div(style="display:inline-block",
-                              actionButton("reset_2",
-                                           label = "Reset")),
-                          br(),
-                          helpText(h5("Save and upload tables into Cytoscape to visualize as a network."))
-                        ),
-                        mainPanel(
-                          width = 9,
-                          tabsetPanel(
-                            type = "tabs",
-                            tabPanel(
-                              "miRNA-target genes",
-                              br(),
-                              verbatimTextOutput("input_err_2"),
-                              verbatimTextOutput("invalid_genes_2"),
-                              div(style="display:inline-block",
-                                  downloadButton("save_txt_corr_cyto", "Download table in Cytoscape input format")),
-                              div(style="display:inline-block",
-                                  downloadButton("save_txt_corr_input", "Download gene/miRNA list for input to Data Browser")),
-                              br(),
-                              tableOutput("corr_table")
-                            )
+                      sidebarPanel(
+                        shinyjs::useShinyjs(),
+                        id = "side-panel_2",
+                        width = 3,
+                        h3("Input a list of genes OR miRNAs"),
+                        br(),
+                        radioButtons("input_type_2",
+                                     label = NULL,
+                                     choices = list("miRNA" = 1, "gene" = 2),
+                                     selected = 1,
+                                     inline = T),
+                        uiOutput("add_helper_input_2"),
+                        uiOutput("add_input_ui_2"),
+                        helpText(h5("Choose to show only differentially expressed (DE) miRNA-gene pairs or all miRNA-gene pairs.")),
+                        radioButtons("filt_choice_2",
+                                     label = NULL,
+                                     choices = list("DE" = 1, "All" = 2),
+                                     selected = 1,
+                                     inline = T),
+                        div(style="display:inline-block",
+                            actionButton("submit_2",
+                                         label = "Submit",
+                                         class = "btn-success")),
+                        div(style="display:inline-block",
+                            actionButton("reset_2",
+                                         label = "Reset")),
+                        br(),
+                        # br(),
+                        # h4("Input examples:"),
+                        # h4("Genes: Ammecr1,Inhba"),
+                        # h4("miRNAs: mmu-miR-224-5p,miR-181a-5p"),
+                        br(),
+                        tags$ol(
+                          tags$li(h5("Save and upload nodes and edges into Cytoscape to visualize as a network."),
+                                  tags$ul(
+                                    tags$li(a(h5("Create network with edges file"),
+                                              href="http://manual.cytoscape.org/en/stable/Creating_Networks.html",
+                                              target = "_blank")),
+                                    tags$li(a(h5("Add information wth nodes file"),
+                                              href="https://manual.cytoscape.org/en/stable/Node_and_Edge_Column_Data.html",
+                                              target = "_blank"))
+                                  )
+                          ),
+                          tags$li(
+                            h5("Upload gene/miRNA list to Data Browser to visualize expression patterns and look at differential expression.")
                           )
-                        )) 
+                        )
+                      ),
+                      mainPanel(
+                        width = 9,
+                        tabsetPanel(
+                          type = "tabs",
+                          tabPanel(
+                            "miRNA-target genes",
+                            br(),
+                            verbatimTextOutput("input_err_2"),
+                            verbatimTextOutput("invalid_genes_2"),
+                            column(6,
+                                   br(),
+                                   tags$div(id = "cytoscape_text", h4("For Cytoscape input:")),
+                                   div(style="display:inline-block",
+                                       downloadButton("save_txt_corr_cyto_nodes", "Download nodes")),
+                                   div(style="display:inline-block",
+                                       downloadButton("save_txt_corr_cyto", "Download edges"))
+                            ),
+                            column(6,
+                                   br(),
+                                   tags$div(id = "browser_input_text", h4("For Data Browser input:")),
+                                   div(style="display:inline-block",
+                                       downloadButton("save_txt_corr_input", "Download gene/miRNA list"))
+                            ),
+                            br(),
+                            tableOutput("corr_table")
+                          )
+                        )
+                      )
+                      )
              ),
              #### About ####
              tabPanel("About", icon=icon("quote-left"),
@@ -409,14 +440,20 @@ server <- function(input, output) {
       })
     }
   })
-  
+  shinyjs::hide(id = "browser_input_text")
+  shinyjs::hide(id = "cytoscape_text")
   shinyjs::hide(id = "save_txt_corr_cyto")
   shinyjs::hide(id = "save_txt_corr_input")
+  shinyjs::hide(id = "save_txt_corr_cyto_nodes")
   # Run functions in response to submit button
   # eventReactive events are delayed until the button is pressed
   press_submit_2 <- eventReactive(input$submit_2, {
+    shinyjs::hide(id = "browser_input_text")
+    shinyjs::hide(id = "cytoscape_text")
     shinyjs::hide(id = "save_txt_corr_cyto")
     shinyjs::hide(id = "save_txt_corr_input")
+    shinyjs::hide(id = "save_txt_corr_cyto_nodes")
+    
     
     output$invalid_genes_2 <- NULL
     invalid_msg <- "Not found: "
@@ -456,8 +493,11 @@ server <- function(input, output) {
     }
     
     if(ncol(corrtable) > 1) { # Check that corr table is not just an error table with 1 column
+      shinyjs::show(id = "browser_input_text")
+      shinyjs::show(id = "cytoscape_text")
       shinyjs::show(id = "save_txt_corr_cyto")
       shinyjs::show(id = "save_txt_corr_input")
+      shinyjs::show(id = "save_txt_corr_cyto_nodes")
     }
     
     output$save_txt_corr_cyto <- downloadHandler(
@@ -465,18 +505,37 @@ server <- function(input, output) {
         paste0(Sys.Date(), "_corr_table_cytoscape.txt")
       },
       content <- function(file) {
-        write.table(corrtable, file,
+        corrtable_cyto <- dplyr::select(corrtable, mirna, gene, rho, database)
+        write.table(corrtable_cyto, file,
                     quote = F, sep = "\t", col.names = T, row.names = F)
       }
     )
+    corrtable_cyto_nodes <- bind_rows(list(dplyr::select(corrtable, mirna, mirna_comparison) %>%
+                                             dplyr::rename(node = mirna, comparison = mirna_comparison),
+                                           dplyr::select(corrtable, gene, gene_comparison) %>%
+                                             dplyr::rename(node = gene, comparison = gene_comparison))) %>%
+      mutate(node_type = ifelse(grepl("mmu-", node), "mirna", "gene"))
     
+    output$save_txt_corr_cyto_nodes <- downloadHandler(
+      filename <- function() {
+        paste0(Sys.Date(), "_corr_nodes_cytoscape.txt")
+      },
+      content <- function(file) {
+        # corrtable_cyto_nodes <- dplyr::select(corrtable, mirna, gene, gene_comparison, mirna_comparison) %>%
+        #   mutate(node_type = ifelse(grepl("mmu-", mirna), "mirna", "gene"))
+        
+        write.table(corrtable_cyto_nodes, file,
+                    quote = F, sep = "\t", col.names = T, row.names = F)
+      }
+    )
     output$save_txt_corr_input <- downloadHandler(
       filename <- function() {
         paste0(Sys.Date(), "_corr_gene_mirna_list.txt")
       },
       content <- function(file) {
-        write.table(corrtable, file,
-                    quote = F, sep = "\t", col.names = T, row.names = F)
+        corrtable_list <- data.frame(matrix(c(corrtable$mirna, corrtable$gene), ncol = 1))
+        write.table(corrtable_list, file,
+                    quote = F, sep = "\t", col.names = F, row.names = F)
       }
     )
     return(list("corrtable" = corrtable))
@@ -490,40 +549,48 @@ server <- function(input, output) {
   hover = T,
   digits = 5)
   
-
+  
   
   #### Functions for data browser tab ####
   data <- reactive({
     text_input <- F
     file_input <- F
-    # print(input$gene)
-    if(!is.null(input$gene)) {
-      # Check if genes are inputted by text box
-      if(input$input_type == 1 & nchar(input$gene) > 0) {
-        text_input <- T
-      } 
-      # Check if a file is uploaded
-      else if(input$input_type == 2) {
-        file_input <- T
-      } else { file_input <- F; text_input <- F}
-    }
-    
-    if(text_input == T & file_input == F) {
-      output$input_err <- NULL
-      data <- parse_list(input$gene, type = "text")
-    }
-    else if(text_input == F & file_input == T) {
-      output$input_err <- NULL
-      file <- input$gene
-      read_file <- read.table(file$datapath, header = F)
-      data <- parse_list(read_file, type = "file")
-    }
-    else{ # Print error message if both fields are empty.
-      data <- parse_list("", type = "text")
-      msg <- "Please input a list of genes/miRNAs."
-      output$input_err <- renderText({
-        msg
-      })
+    if(input$input_type == 3) {
+      print(input$sex_comparison)
+      utr_de_cut <- unique(filter(utr_de_table, comparison == input$sex_comparison))
+      mirna_de_cut <- unique(filter(mirna_de_table, comparison == input$sex_comparison))
+      combine_cut <- bind_rows(list(utr_de_cut[,"ID", drop = F], mirna_de_cut[, "ID", drop = F]))
+      data <- parse_list(paste0(combine_cut$ID, collapse = ","), type = "text")
+    } else {
+      # print(input$gene)
+      if(!is.null(input$gene)) {
+        # Check if genes are inputted by text box
+        if(input$input_type == 1 & nchar(input$gene) > 0) {
+          text_input <- T
+        } 
+        # Check if a file is uploaded
+        else if(input$input_type == 2) {
+          file_input <- T
+        } else { file_input <- F; text_input <- F}
+      }
+      
+      if(text_input == T & file_input == F) {
+        output$input_err <- NULL
+        data <- parse_list(input$gene, type = "text")
+      }
+      else if(text_input == F & file_input == T) {
+        output$input_err <- NULL
+        file <- input$gene
+        read_file <- read.table(file$datapath, header = F)
+        data <- parse_list(read_file, type = "file")
+      }
+      else{ # Print error message if both fields are empty.
+        data <- parse_list("", type = "text")
+        msg <- "Please input a list of genes/miRNAs."
+        output$input_err <- renderText({
+          msg
+        })
+      }
     }
     return(data)
   })
@@ -552,6 +619,23 @@ server <- function(input, output) {
       })
       output$add_input_ui <- renderUI({
         fileInput("gene", label = NULL, accept = ".txt")
+      })
+    }
+    if(input$input_type == 3) {
+      output$add_helper_input <- renderUI({
+        HTML(paste(h5("Select age for sex-biased gene/miRNA list from Hou et al 2022."),
+                   h5("* Some comparisons make take longer to load due to a greater number of miRNAs and genes."),
+                   sep = '</\n/>'))
+      })
+      output$add_input_ui <- renderUI({
+        radioButtons("sex_comparison",
+                     label = NULL,
+                     choices = list("PD12" = "d12_sex",
+                                    "PD22" = "d22_sex",
+                                    "PD27*" = "d27_sex",
+                                    "PD32*" = "d32_sex",
+                                    "PD37*" = "d37_sex"),
+                     selected = 1)
       })
     }
   })
@@ -950,10 +1034,11 @@ server <- function(input, output) {
   height = function() {
     use_height <- press_submit()[["num_genes"]]
     if(use_height > 0) {
-      return(use_height*300)
+      return(use_height*280)
     }
-    else {return(300)}# Height of 1 plot
-  })
+    else {return(280)}# Height of 1 plot
+  },
+  width = 375)
   
   #### miRNA plot outputs ####
   # Outputs miRNA plots
@@ -968,7 +1053,8 @@ server <- function(input, output) {
       return(use_height*300)
     }
     else { return(300)} # Height of 1 plot
-  })
+  },
+  width = 375)
   
   
   output$save_png_plot_genes <- downloadHandler(
