@@ -3,8 +3,6 @@ library(dplyr)
 library(reshape2)
 library(ggplot2)
 library(stringr)
-# source("http://bioconductor.org/biocLite.R")
-# biocLite("EDASeq")
 
 # Load in UTR and miRNA counts
 # utr_obj <- readRDS("data/pit_utr_2019__RUV_k2_set1_2019-07-03.rds")
@@ -113,7 +111,7 @@ parse_list <- function(genelist, type) {
   ensid_match <- ens_match[grep(".", ens_match, fixed = T)]
   ens_match <- ens_match[-grep(".", ens_match, fixed = T)]
   
-
+  
   use_gene_ensembl_convert <- filter(gene_ensembl_convert,
                                      ensembl_gene_id %in% toupper(ens_match) |   # Ensure ENS matches are upper case
                                        ensembl_gene_id_version %in% toupper(ensid_match))$mgi_symbol   # Ensure ENS matches are upper case
@@ -199,6 +197,12 @@ exprplot_hhtheme <- function(genelist,
     }
     if(counttype == "genes") {
       x_breaks <- c(12, 22, 27, 32, 37)
+      study_lab <- unique(left_join(dplyr::select(gene_med, variable),
+                             dplyr::rename(pub_genes_split, variable = ID),
+                             by = "variable")) %>%
+        group_by(variable) %>%
+        summarise(study_id  = toString(study_id))
+      study_lab$study_id <- gsub(" ", "", study_lab$study_id)
     }
     
     p <- ggplot() +
@@ -212,13 +216,19 @@ exprplot_hhtheme <- function(genelist,
       scale_shape_manual(values = c(21, 24)) + 
       theme_light() +
       facet_wrap( .~variable, scales = "free", ncol = 1) +
-      theme(strip.text = element_text(size=18),
-            axis.text = element_text(size=18 - 2, color="black"),
-            axis.title = element_text(size=18),
-            legend.position = "top", text = element_text(size = 18))+
+      theme(strip.text = element_text(size=16),
+            axis.text = element_text(size=16 - 2, color="black"),
+            axis.title = element_text(size=16),
+            legend.position = "top", text = element_text(size = 16))+
       scale_x_continuous(breaks = x_breaks) +
       guides(shape = F)
-    # print(p)
+    
+    if(counttype == "genes") {
+      p <- p + 
+        geom_label(data = study_lab, aes(x = -Inf, y = Inf, label = paste0("StudyID: ", study_id)),
+                  hjust = -0.1, vjust = 1.2, size = 5, alpha = 0.5,
+                label.size = 0.005)
+    }
   } else {
     p <- ggplot() +
       theme_void() +
@@ -258,11 +268,11 @@ print_de_table <- function(genelist,
 }
 
 pub_genes_key <- as.data.frame(matrix(c(1:9, c("Perry2014", "Day2015_GWAS_VB",
-                              "Day2017_nearest", "Hollis2020_GWAS_VB_FH",
-                              "Ye2015_PA_GWAS", "Fang2016_CPHD",
-                              "Hauser2019_PA", "Kurtoglu2019_hypopituitarism",
-                              "IHH/Kallmann")), ncol = 2,
-                     dimnames = list(NULL,c("study_id", "source"))))
+                                               "Day2017_nearest", "Hollis2020_GWAS_VB_FH",
+                                               "Ye2015_PA_GWAS", "Fang2016_CPHD",
+                                               "Hauser2019_PA", "Kurtoglu2019_hypopituitarism",
+                                               "IHH/Kallmann")), ncol = 2,
+                                      dimnames = list(NULL,c("study_id", "source"))))
 pub_genes_split <- left_join(pub_genes_split, pub_genes_key, by = "source")
 
 add_study <- function(use_table, study=unique(pub_genes_split$study_id)) {
@@ -429,5 +439,6 @@ print_corr_table <- function(mirnalist = NULL,
   }
   return(cortable)
 }
+
 
 
