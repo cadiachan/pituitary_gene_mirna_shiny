@@ -205,82 +205,82 @@ ui <- fluidPage(
              #### miRNA-gene ####
              tabPanel(" miRNA-Gene Target Browser", icon = icon("project-diagram"),
                       sidebarLayout(
-                      sidebarPanel(
-                        shinyjs::useShinyjs(),
-                        id = "side-panel_2",
-                        width = 3,
-                        h3("Input a list of genes OR miRNAs"),
-                        br(),
-                        radioButtons("input_type_2",
-                                     label = NULL,
-                                     choices = list("miRNA" = 1, "gene" = 2),
-                                     selected = 1,
-                                     inline = T),
-                        uiOutput("add_helper_input_2"),
-                        uiOutput("add_input_ui_2"),
-                        helpText(h5("Choose to show only differentially expressed (DE) miRNA-gene pairs or all miRNA-gene pairs.")),
-                        radioButtons("filt_choice_2",
-                                     label = NULL,
-                                     choices = list("DE" = 1, "All" = 2),
-                                     selected = 1,
-                                     inline = T),
-                        div(style="display:inline-block",
-                            actionButton("submit_2",
-                                         label = "Submit",
-                                         class = "btn-success")),
-                        div(style="display:inline-block",
-                            actionButton("reset_2",
-                                         label = "Reset")),
-                        br(),
-                        # br(),
-                        # h4("Input examples:"),
-                        # h4("Genes: Ammecr1,Inhba"),
-                        # h4("miRNAs: mmu-miR-224-5p,miR-181a-5p"),
-                        br(),
-                        tags$ol(
-                          tags$li(h5("Save and upload nodes and edges into Cytoscape to visualize as a network."),
-                                  tags$ul(
-                                    tags$li(a(h5("Create network with edges file"),
-                                              href="http://manual.cytoscape.org/en/stable/Creating_Networks.html",
-                                              target = "_blank")),
-                                    tags$li(a(h5("Add information wth nodes file"),
-                                              href="https://manual.cytoscape.org/en/stable/Node_and_Edge_Column_Data.html",
-                                              target = "_blank"))
-                                  )
-                          ),
-                          tags$li(
-                            h5("Upload gene/miRNA list to Data Browser to visualize expression patterns and look at differential expression.")
+                        sidebarPanel(
+                          shinyjs::useShinyjs(),
+                          id = "side-panel_2",
+                          width = 3,
+                          h3("Input a list of genes OR miRNAs"),
+                          br(),
+                          radioButtons("input_type_2",
+                                       label = NULL,
+                                       choices = list("miRNA" = 1, "gene" = 2),
+                                       selected = 1,
+                                       inline = T),
+                          uiOutput("add_helper_input_2"),
+                          uiOutput("add_input_ui_2"),
+                          helpText(h5("Choose to show only differentially expressed (DE) miRNA-gene pairs or all miRNA-gene pairs.")),
+                          radioButtons("filt_choice_2",
+                                       label = NULL,
+                                       choices = list("DE" = 1, "All" = 2),
+                                       selected = 1,
+                                       inline = T),
+                          div(style="display:inline-block",
+                              actionButton("submit_2",
+                                           label = "Submit",
+                                           class = "btn-success")),
+                          div(style="display:inline-block",
+                              actionButton("reset_2",
+                                           label = "Reset")),
+                          br(),
+                          # br(),
+                          # h4("Input examples:"),
+                          # h4("Genes: Ammecr1,Inhba"),
+                          # h4("miRNAs: mmu-miR-224-5p,miR-181a-5p"),
+                          br(),
+                          tags$ol(
+                            tags$li(h5("Save and upload nodes and edges into Cytoscape to visualize as a network."),
+                                    tags$ul(
+                                      tags$li(a(h5("Create network with edges file"),
+                                                href="http://manual.cytoscape.org/en/stable/Creating_Networks.html",
+                                                target = "_blank")),
+                                      tags$li(a(h5("Add information wth nodes file"),
+                                                href="https://manual.cytoscape.org/en/stable/Node_and_Edge_Column_Data.html",
+                                                target = "_blank"))
+                                    )
+                            ),
+                            tags$li(
+                              h5("Upload gene/miRNA list to Data Browser to visualize expression patterns and look at differential expression.")
+                            )
+                          )
+                        ),
+                        mainPanel(
+                          width = 9,
+                          tabsetPanel(
+                            type = "tabs",
+                            tabPanel(
+                              "miRNA-target genes",
+                              br(),
+                              verbatimTextOutput("input_err_2"),
+                              verbatimTextOutput("invalid_genes_2"),
+                              column(6,
+                                     br(),
+                                     tags$div(id = "cytoscape_text", h4("For Cytoscape input:")),
+                                     div(style="display:inline-block",
+                                         downloadButton("save_txt_corr_cyto_nodes", "Download nodes")),
+                                     div(style="display:inline-block",
+                                         downloadButton("save_txt_corr_cyto", "Download edges"))
+                              ),
+                              column(6,
+                                     br(),
+                                     tags$div(id = "browser_input_text", h4("For Data Browser input:")),
+                                     div(style="display:inline-block",
+                                         downloadButton("save_txt_corr_input", "Download gene/miRNA list"))
+                              ),
+                              br(),
+                              tableOutput("corr_table")
+                            )
                           )
                         )
-                      ),
-                      mainPanel(
-                        width = 9,
-                        tabsetPanel(
-                          type = "tabs",
-                          tabPanel(
-                            "miRNA-target genes",
-                            br(),
-                            verbatimTextOutput("input_err_2"),
-                            verbatimTextOutput("invalid_genes_2"),
-                            column(6,
-                                   br(),
-                                   tags$div(id = "cytoscape_text", h4("For Cytoscape input:")),
-                                   div(style="display:inline-block",
-                                       downloadButton("save_txt_corr_cyto_nodes", "Download nodes")),
-                                   div(style="display:inline-block",
-                                       downloadButton("save_txt_corr_cyto", "Download edges"))
-                            ),
-                            column(6,
-                                   br(),
-                                   tags$div(id = "browser_input_text", h4("For Data Browser input:")),
-                                   div(style="display:inline-block",
-                                       downloadButton("save_txt_corr_input", "Download gene/miRNA list"))
-                            ),
-                            br(),
-                            tableOutput("corr_table")
-                          )
-                        )
-                      )
                       )
              ),
              #### About ####
@@ -349,11 +349,11 @@ ui <- fluidPage(
                       br(),
                       h2("Funding"),
                       h4("This work was supported by CIHR grants: 312557 (MRP/MDW/AG) and 437197 (Melissa Holmes/MDW/MRP).",
-                      "MDW is supported by the Canada Research Chairs Program. RQ, C.Chan and DS were supported in part by NSERC grant RGPIN-2019-07014 to MDW.",
-                      "C.Chan and MH were supported by a SickKids RESTRACOMP scholarship. DS is supported by NSERC CGS M, PGS D and Ontario Graduate Scholarships.",
-                      "HH is supported by the Genome Canada Genomics Technology Platform, The Centre for Applied Genomics.",
-                      "MFM is supported by NSERC PGS D and the association computing machinery special interest group on high performance computing",
-                      "(ACM/SIGHPC) Intel Computational and Data Science Fellowship. LU was supported by the CRS Scholarships for the Next Generation of Scientists.")
+                         "MDW is supported by the Canada Research Chairs Program. RQ, C.Chan and DS were supported in part by NSERC grant RGPIN-2019-07014 to MDW.",
+                         "C.Chan and MH were supported by a SickKids RESTRACOMP scholarship. DS is supported by NSERC CGS M, PGS D and Ontario Graduate Scholarships.",
+                         "HH is supported by the Genome Canada Genomics Technology Platform, The Centre for Applied Genomics.",
+                         "MFM is supported by NSERC PGS D and the association computing machinery special interest group on high performance computing",
+                         "(ACM/SIGHPC) Intel Computational and Data Science Fellowship. LU was supported by the CRS Scholarships for the Next Generation of Scientists.")
              )
   )
 )
@@ -636,7 +636,7 @@ server <- function(input, output) {
     if(input$input_type == 3) {
       output$add_helper_input <- renderUI({
         HTML(paste(h5("Select age for sex-biased gene/miRNA list from Hou et al 2022."),
-                   h5("* Some comparisons make take longer to load due to a greater number of miRNAs and genes."),
+                   h5("* Plots will take longer to render. Only the top 50 genes (based on their expression) are plotted. See table for full DE gene list."),
                    sep = '</\n/>'))
       })
       output$add_input_ui <- renderUI({
@@ -718,34 +718,17 @@ server <- function(input, output) {
                               metadata = utr_meta,
                               counttype = "genes")
     num_genes <- length(gplot$plot_env$use_genelist)
-    
-    
-    if(num_genes > 0) {
-      # Create a Progress object
-      progress <- shiny::Progress$new()
-      # Make sure it closes when we exit this reactive, even if there's an error
-      on.exit(progress$close())
-      progress$set(message = "Generating plots", value = 0)
-      
-      # Number of times we'll go through the loop
-      n <- num_genes/5
-      
-      for (i in 1:n) {
-        
-        # Increment the progress bar, and update the detail text.
-        progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
-        
-        # Pause for 0.1 seconds to simulate a long computation.
-        Sys.sleep(0.1)
-      }
-      progress$set(message = "Plots generated", value = 0)
-      shinyjs::show(id = "save_gene_plot_text")
-      shinyjs::show(id = "save_png_plot_genes")
-      shinyjs::show(id = "save_pdf_plot_genes")
-      shinyjs::show(id = "save_gene_expr_text")
-      shinyjs::show(id = "save_txt_expr_genes")
-      shinyjs::show(id = "save_csv_expr_genes")
+    if(num_genes > 50) {
+      num_genes <- 50
     }
+    
+    shinyjs::show(id = "save_gene_plot_text")
+    shinyjs::show(id = "save_png_plot_genes")
+    shinyjs::show(id = "save_pdf_plot_genes")
+    shinyjs::show(id = "save_gene_expr_text")
+    shinyjs::show(id = "save_txt_expr_genes")
+    shinyjs::show(id = "save_csv_expr_genes")
+    
     
     mplot <- exprplot_hhtheme(genelist = data()[["mirnas"]],
                               count_data = mirna_log2,
@@ -761,7 +744,32 @@ server <- function(input, output) {
       shinyjs::show(id = "save_txt_expr_mirnas")
       shinyjs::show(id = "save_csv_expr_mirnas")
     }
-    
+    if(num_genes > 0 | num_mirnas > 0) {
+      total_n <- 0
+      if(num_genes > 0) {
+        total_n <- total_n + num_genes
+      }
+      if(num_mirnas > 0) {
+        total_n <- total_n + num_mirnas
+      }
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Generating plots", value = 0)
+      
+      # Number of times we'll go through the loop
+      n <- total_n/5
+      
+      for (i in 1:n) {
+        
+        # Increment the progress bar, and update the detail text.
+        progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
+        
+        # Pause for 0.1 seconds to simulate a long computation.
+        Sys.sleep(0.1)
+      }
+    }
     gtable <- print_de_table(genelist = data()[["genes"]],
                              de_table = utr_de_table,
                              counttype = "genes")
@@ -1059,6 +1067,22 @@ server <- function(input, output) {
   # Outputs gene plots
   # Plot heights are scaled by number of genes to plot
   output$gene_plot <- renderPlot({
+    progress <- shiny::Progress$new()
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = "Printing gene plots", value = 0)
+
+    # Number of times we'll go through the loop
+    n <- press_submit()[["num_genes"]]/2
+    
+    for (i in 1:n) {
+      
+      # Increment the progress bar, and update the detail text.
+      progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
+      
+      # Pause for 0.1 seconds to simulate a long computation.
+      Sys.sleep(0.1)
+    }
     geneplot_list <- press_submit()["gplot"]
     return(geneplot_list)
   },
@@ -1075,6 +1099,21 @@ server <- function(input, output) {
   # Outputs miRNA plots
   # Plot heights are scaled by number of miRNAs to plot
   output$mirna_plot <- renderPlot({
+    progress <- shiny::Progress$new()
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = "Printing miRNA plots", value = 0)
+    
+    # Number of times we'll go through the loop
+    n <- press_submit()[["num_mirnas"]]/2
+    for (i in 1:n) {
+      
+      # Increment the progress bar, and update the detail text.
+      progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
+      
+      # Pause for 0.1 seconds to simulate a long computation.
+      Sys.sleep(0.1)
+    }
     mirnaplot_list <- press_submit()["mplot"]
     return(mirnaplot_list)
   },
