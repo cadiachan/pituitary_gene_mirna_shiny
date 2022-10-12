@@ -12,13 +12,16 @@ ui <- fluidPage(
              tabPanel("Home",icon = icon("home"),
                       h1("MOUSE PITUITARY GLAND DATA HUB"),
                       br(),
-                      p("Shiny app in development to visualize gene and miRNA expression data generated",
+                      p("Shiny app to visualize gene and miRNA expression data generated",
                         "from 3'UTR-seq and small RNA-seq respectively."),
                       p("Raw data can be accessed at ",
-                        a("E-MTAB-9460.", 
-                          href = "https://www.ebi.ac.uk/arrayexpress/",
+                        a("E-MTAB-9459",
+                          href = "https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-9459",
                           target = "_blank"),
-                        "(Fix link once data is available)"),
+                        ",",
+                        a("E-MTAB-9460.", 
+                          href = "https://www.ebi.ac.uk/biostudies/arrayexpress/studies/E-MTAB-9460",
+                          target = "_blank")),
                       br(),
                       h2("Features"),
                       br(),
@@ -201,82 +204,82 @@ ui <- fluidPage(
              #### miRNA-gene ####
              tabPanel(" miRNA-Gene Target Browser", icon = icon("project-diagram"),
                       sidebarLayout(
-                      sidebarPanel(
-                        shinyjs::useShinyjs(),
-                        id = "side-panel_2",
-                        width = 3,
-                        h3("Input a list of genes OR miRNAs"),
-                        br(),
-                        radioButtons("input_type_2",
-                                     label = NULL,
-                                     choices = list("miRNA" = 1, "gene" = 2),
-                                     selected = 1,
-                                     inline = T),
-                        uiOutput("add_helper_input_2"),
-                        uiOutput("add_input_ui_2"),
-                        helpText(h5("Choose to show only differentially expressed (DE) miRNA-gene pairs or all miRNA-gene pairs.")),
-                        radioButtons("filt_choice_2",
-                                     label = NULL,
-                                     choices = list("DE" = 1, "All" = 2),
-                                     selected = 1,
-                                     inline = T),
-                        div(style="display:inline-block",
-                            actionButton("submit_2",
-                                         label = "Submit",
-                                         class = "btn-success")),
-                        div(style="display:inline-block",
-                            actionButton("reset_2",
-                                         label = "Reset")),
-                        br(),
-                        # br(),
-                        # h4("Input examples:"),
-                        # h4("Genes: Ammecr1,Inhba"),
-                        # h4("miRNAs: mmu-miR-224-5p,miR-181a-5p"),
-                        br(),
-                        tags$ol(
-                          tags$li(h5("Save and upload nodes and edges into Cytoscape to visualize as a network."),
-                                  tags$ul(
-                                    tags$li(a(h5("Create network with edges file"),
-                                              href="http://manual.cytoscape.org/en/stable/Creating_Networks.html",
-                                              target = "_blank")),
-                                    tags$li(a(h5("Add information wth nodes file"),
-                                              href="https://manual.cytoscape.org/en/stable/Node_and_Edge_Column_Data.html",
-                                              target = "_blank"))
-                                  )
-                          ),
-                          tags$li(
-                            h5("Upload gene/miRNA list to Data Browser to visualize expression patterns and look at differential expression.")
+                        sidebarPanel(
+                          shinyjs::useShinyjs(),
+                          id = "side-panel_2",
+                          width = 3,
+                          h3("Input a list of genes OR miRNAs"),
+                          br(),
+                          radioButtons("input_type_2",
+                                       label = NULL,
+                                       choices = list("miRNA" = 1, "gene" = 2),
+                                       selected = 1,
+                                       inline = T),
+                          uiOutput("add_helper_input_2"),
+                          uiOutput("add_input_ui_2"),
+                          helpText(h5("Choose to show only differentially expressed (DE) miRNA-gene pairs or all miRNA-gene pairs.")),
+                          radioButtons("filt_choice_2",
+                                       label = NULL,
+                                       choices = list("DE" = 1, "All" = 2),
+                                       selected = 1,
+                                       inline = T),
+                          div(style="display:inline-block",
+                              actionButton("submit_2",
+                                           label = "Submit",
+                                           class = "btn-success")),
+                          div(style="display:inline-block",
+                              actionButton("reset_2",
+                                           label = "Reset")),
+                          br(),
+                          # br(),
+                          # h4("Input examples:"),
+                          # h4("Genes: Ammecr1,Inhba"),
+                          # h4("miRNAs: mmu-miR-224-5p,miR-181a-5p"),
+                          br(),
+                          tags$ol(
+                            tags$li(h5("Save and upload nodes and edges into Cytoscape to visualize as a network."),
+                                    tags$ul(
+                                      tags$li(a(h5("Create network with edges file"),
+                                                href="http://manual.cytoscape.org/en/stable/Creating_Networks.html",
+                                                target = "_blank")),
+                                      tags$li(a(h5("Add information wth nodes file"),
+                                                href="https://manual.cytoscape.org/en/stable/Node_and_Edge_Column_Data.html",
+                                                target = "_blank"))
+                                    )
+                            ),
+                            tags$li(
+                              h5("Upload gene/miRNA list to Data Browser to visualize expression patterns and look at differential expression.")
+                            )
+                          )
+                        ),
+                        mainPanel(
+                          width = 9,
+                          tabsetPanel(
+                            type = "tabs",
+                            tabPanel(
+                              "miRNA-target genes",
+                              br(),
+                              verbatimTextOutput("input_err_2"),
+                              verbatimTextOutput("invalid_genes_2"),
+                              column(6,
+                                     br(),
+                                     tags$div(id = "cytoscape_text", h4("For Cytoscape input:")),
+                                     div(style="display:inline-block",
+                                         downloadButton("save_txt_corr_cyto_nodes", "Download nodes")),
+                                     div(style="display:inline-block",
+                                         downloadButton("save_txt_corr_cyto", "Download edges"))
+                              ),
+                              column(6,
+                                     br(),
+                                     tags$div(id = "browser_input_text", h4("For Data Browser input:")),
+                                     div(style="display:inline-block",
+                                         downloadButton("save_txt_corr_input", "Download gene/miRNA list"))
+                              ),
+                              br(),
+                              tableOutput("corr_table")
+                            )
                           )
                         )
-                      ),
-                      mainPanel(
-                        width = 9,
-                        tabsetPanel(
-                          type = "tabs",
-                          tabPanel(
-                            "miRNA-target genes",
-                            br(),
-                            verbatimTextOutput("input_err_2"),
-                            verbatimTextOutput("invalid_genes_2"),
-                            column(6,
-                                   br(),
-                                   tags$div(id = "cytoscape_text", h4("For Cytoscape input:")),
-                                   div(style="display:inline-block",
-                                       downloadButton("save_txt_corr_cyto_nodes", "Download nodes")),
-                                   div(style="display:inline-block",
-                                       downloadButton("save_txt_corr_cyto", "Download edges"))
-                            ),
-                            column(6,
-                                   br(),
-                                   tags$div(id = "browser_input_text", h4("For Data Browser input:")),
-                                   div(style="display:inline-block",
-                                       downloadButton("save_txt_corr_input", "Download gene/miRNA list"))
-                            ),
-                            br(),
-                            tableOutput("corr_table")
-                          )
-                        )
-                      )
                       )
              ),
              #### About ####
@@ -285,55 +288,58 @@ ui <- fluidPage(
                       # p("Text about this app"),
                       # br(),
                       h2("Cite"),
-                      h4("Hou H, Chan C, Yuki KE, et al. Postnatal developmental trajectory of sex-biased gene expression in the mouse pituitary gland.",
-                         "Manuscript in preparation."),
+                      h4("Hou H, Chan C, et al. Postnatal developmental trajectory of sex-biased gene expression in the mouse",
+                         "pituitary gland. Biology of Sex Differences. 2022;13:57.",
+                         a("doi:10.1186/s13293-022-00467-7",
+                           href = "https://bsd.biomedcentral.com/articles/10.1186/s13293-022-00467-7",
+                           target = "_blank")),
                       br(),
                       h2("References"),
                       downloadButton("save_genelists", "Download gene list compendium"),
                       p("A compendium of puberty-related (#1-4,9) and pituitary gland disease-related (#5-8) gene lists were curated from the following studies:"),
                       tags$ol(
-                        tags$li(h4("Perry JR, Day F, Elks CE, et al. Parent-of-origin-specific allelic associations among 106 genomic loci for age at menarche.",
+                        tags$li(h4("Perry JR, Day F, Elks CE, Sulem, P, et al. Parent-of-origin-specific allelic associations among 106 genomic loci for age at menarche.",
                                    "Nature. 2014;514(7520):92-97. PMID: 25231870.",
                                    a("doi:10.1038/nature13545",
                                      href="https://pubmed.ncbi.nlm.nih.gov/25231870/",
                                      target = "_blank"))),
-                        tags$li(h4("Day FR, Bulik-Sullivan B, Hinds DA, et al. Shared genetic aetiology of puberty timing between sexes and with",
+                        tags$li(h4("Day FR, et al. Shared genetic aetiology of puberty timing between sexes and with",
                                    "health-related outcomes. Nat Commun. 2015;6:8842. Published 2015 Nov 9. PMID: 26548314.",
                                    a("doi:10.1038/ncomms9842",
                                      href="https://pubmed.ncbi.nlm.nih.gov/26548314/",
                                      target = "_blank"))),
-                        tags$li(h4("Day FR, Thompson DJ, Helgason H, et al. Genomic analyses identify hundreds of variants associated with age at menarche",
+                        tags$li(h4("Day FR, et al. Genomic analyses identify hundreds of variants associated with age at menarche",
                                    "and support a role for puberty timing in cancer risk. Nat Genet. 2017;49(6):834-841. PMID: 28436984.",
                                    a("doi:10.1038/ng.3841",
                                      href="https://pubmed.ncbi.nlm.nih.gov/28436984/",
                                      target = "_blank"))),
-                        tags$li(h4("Hollis B, Day FR, Busch AS, et al. Genomic analysis of male puberty timing highlights shared genetic basis with hair colour",
+                        tags$li(h4("Hollis B, Day FR, et al. Genomic analysis of male puberty timing highlights shared genetic basis with hair colour",
                                    "and lifespan. Nat Commun. 2020;11(1):1536. Published 2020 Mar 24. PMID: 32210231.",
                                    a("doi:10.1038/s41467-020-14451-5",
                                      href="https://pubmed.ncbi.nlm.nih.gov/32210231/",
                                      target = "_blank"))),
-                        tags$li(h4("Ye Z, Li Z, Wang Y, et al. Common variants at 10p12.31, 10q21.1 and 13q12.13 are associated with sporadic pituitary adenoma.",
+                        tags$li(h4("Ye Z, et al. Common variants at 10p12.31, 10q21.1 and 13q12.13 are associated with sporadic pituitary adenoma.",
                                    "Nat Genet. 2015;47(7):793-797. PMID: 26029870.",
                                    a("doi:10.1038/ng.3322",
                                      href="https://pubmed.ncbi.nlm.nih.gov/26029870/",
                                      target = "_blank"))),
-                        tags$li(h4("Fang Q, George AS, Brinkmeier ML, et al. Genetics of Combined Pituitary Hormone Deficiency: Roadmap into the Genome Era.",
+                        tags$li(h4("Fang Q, et al. Genetics of Combined Pituitary Hormone Deficiency: Roadmap into the Genome Era.",
                                    "Endocr Rev. 2016;37(6):636-675. PMID: 27828722.",
                                    a("doi:10.1210/er.2016-1101",
                                      href="https://pubmed.ncbi.nlm.nih.gov/27828722/",
                                      target = "_blank"))),
-                        tags$li( h4("Hauser BM, Lau A, Gupta S, Bi WL, Dunn IF. The Epigenomics of Pituitary Adenoma.",
+                        tags$li( h4("Hauser BM, et al. The Epigenomics of Pituitary Adenoma.",
                                     "Front Endocrinol (Lausanne). 2019;10:290. Published 2019 May 14. PMID: 31139150.",
                                     a("doi:10.3389/fendo.2019.00290",
                                       href="https://pubmed.ncbi.nlm.nih.gov/31139150/",
                                       target = "_blank"))),
-                        tags$li(h4("Kurtoglu S, Ozdemir A, Hatipoglu N. Neonatal Hypopituitarism: Approaches to Diagnosis and Treatment.",
+                        tags$li(h4("Kurtoglu S, et al. Neonatal Hypopituitarism: Approaches to Diagnosis and Treatment.",
                                    "J Clin Res Pediatr Endocrinol. 2019;11(1):4-12. PMID: 29739730.",
                                    a("doi:10.4274/jcrpe.galenos.2018.2018.0036",
-                                     href="https://pubmed.ncbi.nlm.nih.gov/32210231/",
+                                     href="https://https://pubmed.ncbi.nlm.nih.gov/29739730/",
                                      target = "_blank"))),
                         tags$li(h4("Isolated hypogonadotropic hypogonadism (IHH)/Kallmann syndrome.",
-                                   "Gene list previously curated in Hou H, Uusküla-Reimand L, Makarem M, et al.",
+                                   "Gene list previously curated in Hou H, Uusküla-Reimand L, et al.",
                                    "Gene expression profiling of puberty-associated genes reveals abundant tissue and sex-specific changes across postnatal development.",
                                    "Hum Mol Genet. 2017;26(18):3585-3599. PMID: 28911201.",
                                    a("doi:10.1093/hmg/ddx246",
@@ -341,7 +347,13 @@ ui <- fluidPage(
                                      target = "_blank")))
                       ),
                       br(),
-                      h2("Funding")
+                      h2("Funding"),
+                      h4("This work was supported by CIHR grants: 312557 (MRP/MDW/AG) and 437197 (Melissa Holmes/MDW/MRP).",
+                         "MDW is supported by the Canada Research Chairs Program. RQ, C.Chan and DS were supported in part by NSERC grant RGPIN-2019-07014 to MDW.",
+                         "C.Chan and MH were supported by a SickKids RESTRACOMP scholarship. DS is supported by NSERC CGS M, PGS D and Ontario Graduate Scholarships.",
+                         "HH is supported by the Genome Canada Genomics Technology Platform, The Centre for Applied Genomics.",
+                         "MFM is supported by NSERC PGS D and the association computing machinery special interest group on high performance computing",
+                         "(ACM/SIGHPC) Intel Computational and Data Science Fellowship. LU was supported by the CRS Scholarships for the Next Generation of Scientists.")
              )
   )
 )
@@ -624,7 +636,7 @@ server <- function(input, output) {
     if(input$input_type == 3) {
       output$add_helper_input <- renderUI({
         HTML(paste(h5("Select age for sex-biased gene/miRNA list from Hou et al 2022."),
-                   h5("* Some comparisons make take longer to load due to a greater number of miRNAs and genes."),
+                   h5("* Plots will take longer to render. Only the top 50 genes (based on their expression) are plotted. See table for full DE gene list."),
                    sep = '</\n/>'))
       })
       output$add_input_ui <- renderUI({
@@ -706,15 +718,17 @@ server <- function(input, output) {
                               metadata = utr_meta,
                               counttype = "genes")
     num_genes <- length(gplot$plot_env$use_genelist)
-    
-    if(num_genes > 0) {
-      shinyjs::show(id = "save_gene_plot_text")
-      shinyjs::show(id = "save_png_plot_genes")
-      shinyjs::show(id = "save_pdf_plot_genes")
-      shinyjs::show(id = "save_gene_expr_text")
-      shinyjs::show(id = "save_txt_expr_genes")
-      shinyjs::show(id = "save_csv_expr_genes")
+    if(num_genes > 50) {
+      num_genes <- 50
     }
+    
+    shinyjs::show(id = "save_gene_plot_text")
+    shinyjs::show(id = "save_png_plot_genes")
+    shinyjs::show(id = "save_pdf_plot_genes")
+    shinyjs::show(id = "save_gene_expr_text")
+    shinyjs::show(id = "save_txt_expr_genes")
+    shinyjs::show(id = "save_csv_expr_genes")
+    
     
     mplot <- exprplot_hhtheme(genelist = data()[["mirnas"]],
                               count_data = mirna_log2,
@@ -730,7 +744,32 @@ server <- function(input, output) {
       shinyjs::show(id = "save_txt_expr_mirnas")
       shinyjs::show(id = "save_csv_expr_mirnas")
     }
-    
+    if(num_genes > 0 | num_mirnas > 0) {
+      total_n <- 0
+      if(num_genes > 0) {
+        total_n <- total_n + num_genes
+      }
+      if(num_mirnas > 0) {
+        total_n <- total_n + num_mirnas
+      }
+      # Create a Progress object
+      progress <- shiny::Progress$new()
+      # Make sure it closes when we exit this reactive, even if there's an error
+      on.exit(progress$close())
+      progress$set(message = "Generating plots", value = 0)
+      
+      # Number of times we'll go through the loop
+      n <- total_n/5
+      
+      for (i in 1:n) {
+        
+        # Increment the progress bar, and update the detail text.
+        progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
+        
+        # Pause for 0.1 seconds to simulate a long computation.
+        Sys.sleep(0.1)
+      }
+    }
     gtable <- print_de_table(genelist = data()[["genes"]],
                              de_table = utr_de_table,
                              counttype = "genes")
@@ -1028,6 +1067,22 @@ server <- function(input, output) {
   # Outputs gene plots
   # Plot heights are scaled by number of genes to plot
   output$gene_plot <- renderPlot({
+    progress <- shiny::Progress$new()
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = "Printing gene plots", value = 0)
+
+    # Number of times we'll go through the loop
+    n <- press_submit()[["num_genes"]]/2
+    
+    for (i in 1:n) {
+      
+      # Increment the progress bar, and update the detail text.
+      progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
+      
+      # Pause for 0.1 seconds to simulate a long computation.
+      Sys.sleep(0.1)
+    }
     geneplot_list <- press_submit()["gplot"]
     return(geneplot_list)
   },
@@ -1044,6 +1099,21 @@ server <- function(input, output) {
   # Outputs miRNA plots
   # Plot heights are scaled by number of miRNAs to plot
   output$mirna_plot <- renderPlot({
+    progress <- shiny::Progress$new()
+    # Make sure it closes when we exit this reactive, even if there's an error
+    on.exit(progress$close())
+    progress$set(message = "Printing miRNA plots", value = 0)
+    
+    # Number of times we'll go through the loop
+    n <- press_submit()[["num_mirnas"]]/2
+    for (i in 1:n) {
+      
+      # Increment the progress bar, and update the detail text.
+      progress$inc(1/n, detail = paste(round((i/n)*100, 1), "%"))
+      
+      # Pause for 0.1 seconds to simulate a long computation.
+      Sys.sleep(0.1)
+    }
     mirnaplot_list <- press_submit()["mplot"]
     return(mirnaplot_list)
   },

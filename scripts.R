@@ -178,6 +178,10 @@ exprplot_hhtheme <- function(genelist,
   if(length(genelist %in% rownames(count_data)) > 0) {
     
     genecounts <- as.data.frame(t(count_data[which(rownames(count_data) %in% use_genelist),, drop = F]))
+    if(length(use_genelist) > 50) {
+      genesub <- order(colSums(genecounts), decreasing = T)[1:50]
+      genecounts <- genecounts[,genesub]
+    }
     # colnames(genecounts) <- use_genelist
     genecounts$sample <- rownames(genecounts)
     
